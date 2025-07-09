@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import dotenv from "dotenv";
 import userRoutes from "./routes/user.routes";
+import authRoutes from './routes/auth.routes';
 // import eventRoutes from "./routes/event.routes";
 
 const app = express();
@@ -15,6 +16,7 @@ app.get('/', (req: Request, res: Response) => {
   res.send('Hello World!');
 });
 app.use("/api/users", userRoutes);
+app.use("/api/auth", authRoutes);
 // app.use("/api/events", eventRoutes);
 
 

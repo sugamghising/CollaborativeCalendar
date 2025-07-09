@@ -8,11 +8,14 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String?
-  events    Event[]
-  createdAt DateTime @default(now())
+  id               Int               @id @default(autoincrement())
+  email            String            @unique
+  password         String?
+  name             String?
+  isVerified       Boolean           @default(false)
+  events           Event[]
+  verificationcode Verificationcode?
+  createdAt        DateTime          @default(now())
 }
 
 model Event {
@@ -22,4 +25,21 @@ model Event {
   userId    Int
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
+}
+
+model Verificationcode {
+  id        Int       @id @default(autoincrement())
+  code      String
+  types     CodeTypes
+  expireAt  DateTime
+  createdAt DateTime  @default(now())
+  attempts  Int
+  used      Boolean   @default(false)
+  userId    Int       @unique
+  user      User      @relation(fields: [userId], references: [id])
+}
+
+enum CodeTypes {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
 }
