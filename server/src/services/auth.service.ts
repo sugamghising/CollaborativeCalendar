@@ -1,5 +1,6 @@
 import prisma from "../config/db";
 import { generateCode } from "../utils/generate";
+import { comparePassword } from "../utils/hashPassword";
 
 export const requestVerificationCode = async (email: string) => {
   let user = await prisma.user.findUnique({ where: { email } });
@@ -66,3 +67,18 @@ export const completeSignupUser = async (userId: number, name: string, passwordH
 
   return user;
 };
+
+export const loginService=async(email:string,password:string)=>{
+  const user = await prisma.user.findFirst({
+    where:{
+      email
+    },
+  })
+  if(!user?.password||!user){
+    throw new Error("user doesnot exist in this email");
+  }
+  const ismatched=await comparePassword(password,user.password);
+  return {isVerified:ismatched,userId:user.id}
+}
+
+

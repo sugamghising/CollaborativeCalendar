@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
-import { completeSignupUser, requestVerificationCode, verifyCode } from "../services/auth.service";
-import { error } from "console";
+import { completeSignupUser, loginService, requestVerificationCode, verifyCode } from "../services/auth.service";
 import { sendVerificationEmail } from "../utils/email";
-import { completeSignupVerifySchema, emailcodeSchema, emailcodeVerifySchema } from "../types/types";
+import { completeSignupVerifySchema, emailcodeSchema, emailcodeVerifySchema, loginSchema } from "../types/types";
 import { hashPassword } from "../utils/hashPassword";
 import { createVerifiedToken, verifyToken } from "../utils/jwt";
+
 
 export const signupEmailcode = async (req: Request, res: Response) => {
     const parsedData = emailcodeSchema.safeParse(req.body);
@@ -80,5 +80,30 @@ export const completeSignup=async(req:Request,res:Response)=>{
         res.status(500).json({
             erro:"server error!!!"
         })
+    }
+}
+
+export const login=async(req:Request,res:Response)=>{
+    const parsedData = loginSchema.safeParse(req.body);
+    if(!parsedData.success){
+        res.status(400).json({
+            message:"invalid schema!!!",
+            error:parsedData.error.flatten().fieldErrors
+        });
+        return
+    }
+    try {
+        const {email,password}=parsedData.data
+        const {isVerified,userId}=await loginService(email,password)
+        if(isVerified){
+            const expiredIn=60*60*24*7//7days
+            const SessionToken=createVerifiedToken(userId,expiredIn)
+            res.status(200).json({
+                message:"login successfully!!!",
+                SessionToken
+            })
+        }
+    } catch (error) {
+        res.status(500).json({error:"couldnot verify the code"})
     }
 }
