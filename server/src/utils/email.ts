@@ -14,3 +14,15 @@ export const sendVerificationEmail = async (email:string, code:string) => {
     `,
   });
 }
+export const sendForgotpasswordEmail = async (email:string, code:string) => {
+  await resend.emails.send({
+    from: process.env.EMAIL_FROM as string,
+    to: email,
+    subject: 'Verify your Email',
+    html: `
+      <p>Hello,</p>
+      <p>Your forgotpassword code is: <strong>${code}</strong></p>
+      <p>Or click to verify: <a href="${process.env.FRONTEND_URL}/verify?code=${code}">Verify Email</a></p>
+    `,
+  });
+}
