@@ -2,6 +2,8 @@ import React from 'react'
 import Header from '../components/layout/Header'
 import Sidebar from '../components/layout/Siderbar'
 import Main from '../components/layout/Main'
+import SignUp from './SignUp'
+import Login from './Login'
 
 const Homepage = () => {
   return (
@@ -9,7 +11,8 @@ const Homepage = () => {
       <Header />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
-        <Main />
+        <Login />
+        {/* <Main /> */}
       </div>
     </div>
   )
