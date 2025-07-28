@@ -19,3 +19,6 @@ export const loginSchema=z.object({
 export const forgotPasswordfillSchema=z.object({
     password:z.string().min(5)
 })
+export const joinTeamSchema=z.object({
+    inviteCode:z.string().min(8)
+})

@@ -78,6 +78,7 @@ export const loginService=async(email:string,password:string)=>{
     throw new Error("user doesnot exist in this email");
   }
   const ismatched=await comparePassword(password,user.password);
+  
   return {isVerified:ismatched,userId:user.id}
 }
 export const requestForgotpasswordCode = async (email: string) => {

@@ -24,6 +24,7 @@ export const signupEmailcode = async (req: Request, res: Response) => {
 
         res.status(200).json({message:"Verification code has been sent"})
     } catch (error) {
+        console.log("error while sending the signupEmailcode ",error)
         res.status(500).json({error:"couldnot send code"})
     }
 };

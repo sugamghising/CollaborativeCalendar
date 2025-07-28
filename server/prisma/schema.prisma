@@ -15,7 +15,28 @@ model User {
   isVerified       Boolean           @default(false)
   events           Event[]
   verificationcode Verificationcode?
+  team             UserTeam[]
   createdAt        DateTime          @default(now())
+}
+
+model Team {
+  id         Int        @id @default(autoincrement())
+  name       String
+  inviteCode String     @unique
+  user       UserTeam[]
+}
+
+model UserTeam {
+  id       Int          @id @default(autoincrement())
+  status   inviteStatus @default(PENDING)
+  role     Role         @default(MEMBER)
+  isActive Boolean      @default(false)
+  User     User         @relation(fields: [userId], references: [id])
+  userId   Int
+  Team     Team         @relation(fields: [teamId], references: [id])
+  teamId   Int
+
+  @@unique([userId, teamId])
 }
 
 model Event {
@@ -42,4 +63,15 @@ model Verificationcode {
 enum CodeTypes {
   EMAIL_VERIFICATION
   PASSWORD_RESET
+}
+
+enum inviteStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum Role {
+  MEMBER
+  LEADER
 }
