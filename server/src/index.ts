@@ -15,7 +15,7 @@ app.use(express.json());
 app.get('/', (req: Request, res: Response) => {
   res.send('Hello World!');
 });
-app.use("/api/users", userRoutes);
+app.use("/api/user", userRoutes);
 app.use("/api/auth", authRoutes);
 // app.use("/api/events", eventRoutes);
 

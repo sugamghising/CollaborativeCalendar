@@ -9,7 +9,7 @@ export const requestVerificationCode = async (email: string) => {
   }
 
   const code = generateCode();
-  const expireAt = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+  const expireAt = new Date(Date.now() + 20 * 60 * 1000); // 20 mins
 
   await prisma.verificationcode.upsert({
     where: { userId: user.id },
@@ -78,7 +78,30 @@ export const loginService=async(email:string,password:string)=>{
     throw new Error("user doesnot exist in this email");
   }
   const ismatched=await comparePassword(password,user.password);
+  
   return {isVerified:ismatched,userId:user.id}
 }
+export const requestForgotpasswordCode = async (email: string) => {
+  let user = await prisma.user.findUnique({ where: { email } });
+  if (!user) {
+   throw new Error ("the email doesnot exist try signup first");
+  }
+
+  const code = generateCode();
+  const expireAt = new Date(Date.now() + 20 * 60 * 1000); // 20 mins
+
+  await prisma.verificationcode.upsert({
+    where: { userId: user.id },
+    update: { code, expireAt, attempts: 0 },
+    create: {
+      code,
+      userId: user.id,
+      types: "PASSWORD_RESET",
+      expireAt,
+      attempts: 0
+    }
+  });
+  return { email, code };
+};
 
 
