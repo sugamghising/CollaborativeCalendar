@@ -260,3 +260,77 @@ export const acceptInvite = async (req: Request, res: Response) => {
      return
   }
 };
+
+
+
+
+export const getTeam = async (req: Request, res: Response) => {
+  const userId = req.user!.userId;
+  
+  try {
+    // Get user's team with team details and all team members
+    const userTeam = await prisma.userTeam.findFirst({
+      where: {
+        userId,
+        status: "ACCEPTED" // Only accepted memberships
+      },
+      include: {
+        Team: { // Fixed: Team not User (you want team info, not user info)
+          select: {
+            id: true,
+            name: true,
+            inviteCode: true,
+            user: { // Get all team members
+              where: {
+                status: "ACCEPTED"
+              },
+              include: {
+                User: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!userTeam) {
+      res.status(200).json({
+        message: "No team found",
+        team: null,
+        success: true // Fixed: success not succes
+      });
+      return;
+    }
+
+    res.status(200).json({ // Fixed: Added status code
+      message: "Team fetched successfully",
+      team: {
+        id: userTeam.Team.id,
+        name: userTeam.Team.name,
+        inviteCode: userTeam.Team.inviteCode,
+        members: userTeam.Team.user.map(member => ({
+          id: member.User.id,
+          name: member.User.name,
+          email: member.User.email,
+          role: member.role,
+          isActive: member.isActive
+        }))
+      },
+      success: true
+    });
+
+  } catch (error) {
+    console.log("Error fetching team:", error);
+    res.status(500).json({ // Fixed: Added status code
+      message: "Could not fetch team",
+      error: "Internal server error",
+      success: false
+    });
+  }
+};
