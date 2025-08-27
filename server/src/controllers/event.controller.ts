@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { createscheduleSchema } from "../types/types";
 import prisma from "../config/db";
 import { checkTimeSlotAvailability, findNextAvailableTime, replaceLowPriorityMeeting } from "../services/event.service";
-import { CANCELLED } from "dns";
+
 
 
 export const getmeetings = async (req: Request, res: Response) => {
