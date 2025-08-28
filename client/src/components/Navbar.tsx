@@ -1,7 +1,13 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { CalendarIcon, HomeIcon, UserGroupIcon, ChartBarIcon, BellIcon } from '@heroicons/react/24/outline';
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import {
+  CalendarIcon,
+  HomeIcon,
+  UserGroupIcon,
+  ChartBarIcon,
+  BellIcon,
+} from "@heroicons/react/24/outline";
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -10,9 +16,9 @@ const Navbar = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      navigate('/');
+      navigate("/");
     } catch (error) {
-      console.error('Failed to log out', error);
+      console.error("Failed to log out", error);
     }
   };
 
@@ -25,7 +31,7 @@ const Navbar = () => {
             <Link to="/" className="text-xl font-bold text-green-600">
               TeamUp
             </Link>
-            
+
             {/* Navigation links - only show when logged in */}
             {user && (
               <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
@@ -50,6 +56,13 @@ const Navbar = () => {
                   <UserGroupIcon className="h-5 w-5 mr-1" />
                   Events
                 </Link>
+                <Link
+                  to="/team-members"
+                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                >
+                  <UserGroupIcon className="h-5 w-5 mr-1" />
+                  Team Members
+                </Link>
               </div>
             )}
           </div>
@@ -70,11 +83,12 @@ const Navbar = () => {
                 <div className="ml-3 relative">
                   <div className="flex items-center">
                     <span className="text-sm font-medium text-gray-700 mr-2">
-                      {user?.name || user?.email || 'User'}
+                      {user?.name || user?.email || "User"}
                     </span>
                     <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-semibold">
-                      {user?.name?.charAt(0)?.toUpperCase() || 
-                       user?.email?.charAt(0)?.toUpperCase() || 'U'}
+                      {user?.name?.charAt(0)?.toUpperCase() ||
+                        user?.email?.charAt(0)?.toUpperCase() ||
+                        "U"}
                     </div>
                   </div>
                 </div>

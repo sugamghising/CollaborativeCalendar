@@ -1,19 +1,20 @@
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from './context/AuthContext';
+import React from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "./context/AuthContext";
 
 // Lazy load components for better performance
-const HomePage = React.lazy(() => import('./pages/Homepage'));
-const Login = React.lazy(() => import('./pages/Login'));
-const SignUp = React.lazy(() => import('./pages/SignUp'));
-const Dashboard = React.lazy(() => import('./pages/Dashboard'));
-const Profile = React.lazy(() => import('./pages/Profile'));
-const Calendar = React.lazy(() => import('./pages/Calendar'));
-const Events = React.lazy(() => import('./pages/Events'));
-const Unauthorized = React.lazy(() => import('./pages/Unauthorized'));
-const NotFound = React.lazy(() => import('./pages/NotFound'));
-const VerifyEmail = React.lazy(() => import('./pages/VerifyEmail'));
-const CompleteSignup = React.lazy(() => import('./pages/CompleteSignup'));
+const HomePage = React.lazy(() => import("./pages/Homepage"));
+const Login = React.lazy(() => import("./pages/Login"));
+const SignUp = React.lazy(() => import("./pages/SignUp"));
+const Dashboard = React.lazy(() => import("./pages/Dashboard"));
+const Profile = React.lazy(() => import("./pages/Profile"));
+const Calendar = React.lazy(() => import("./pages/Calendar"));
+const Events = React.lazy(() => import("./pages/Events"));
+const Unauthorized = React.lazy(() => import("./pages/Unauthorized"));
+const NotFound = React.lazy(() => import("./pages/NotFound"));
+const VerifyEmail = React.lazy(() => import("./pages/VerifyEmail"));
+const CompleteSignup = React.lazy(() => import("./pages/CompleteSignup"));
+const TeamMembers = React.lazy(() => import("./pages/TeamMembers"));
 
 // Loading component for Suspense fallback
 const LoadingSpinner = () => (
@@ -25,30 +26,30 @@ const LoadingSpinner = () => (
 // Public route wrapper
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
-  
+
   if (loading) {
     return <LoadingSpinner />;
   }
-  
+
   if (user) {
     return <Navigate to="/dashboard" replace />;
   }
-  
+
   return <>{children}</>;
 };
 
 // Protected route wrapper
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
-  
+
   if (loading) {
     return <LoadingSpinner />;
   }
-  
+
   if (!user) {
     return <Navigate to="/" replace />;
   }
-  
+
   return <>{children}</>;
 };
 
@@ -57,63 +58,98 @@ const AppRoutes = () => {
     <React.Suspense fallback={<LoadingSpinner />}>
       <Routes>
         {/* Public Routes */}
-        <Route path="/login" element={
-          <PublicRoute>
-            <Login />
-          </PublicRoute>
-        } />
-        
-        <Route path="/signup" element={
-          <PublicRoute>
-            <SignUp />
-          </PublicRoute>
-        } />
-        <Route path="/verify-email" element={
-  <PublicRoute>
-    <VerifyEmail />
-  </PublicRoute>
-} />
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          }
+        />
 
-<Route path="/complete-signup" element={
-  <PublicRoute>
-    <CompleteSignup />
-  </PublicRoute>
-} />
-        
+        <Route
+          path="/signup"
+          element={
+            <PublicRoute>
+              <SignUp />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/verify-email"
+          element={
+            <PublicRoute>
+              <VerifyEmail />
+            </PublicRoute>
+          }
+        />
+
+        <Route
+          path="/complete-signup"
+          element={
+            <PublicRoute>
+              <CompleteSignup />
+            </PublicRoute>
+          }
+        />
+
         <Route path="/unauthorized" element={<Unauthorized />} />
-        
+
         {/* Homepage - Public but redirects to dashboard if logged in */}
-        <Route path="/" element={
-          <PublicRoute>
-            <HomePage />
-          </PublicRoute>
-        } />
-        
+        <Route
+          path="/"
+          element={
+            <PublicRoute>
+              <HomePage />
+            </PublicRoute>
+          }
+        />
+
         {/* Protected Routes - Require authentication */}
-        <Route path="/dashboard" element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/profile" element={
-          <ProtectedRoute>
-            <Profile />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/calendar" element={
-          <ProtectedRoute>
-            <Calendar />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/events" element={
-          <ProtectedRoute>
-            <Events />
-          </ProtectedRoute>
-        } />
-        
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/calendar"
+          element={
+            <ProtectedRoute>
+              <Calendar />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/events"
+          element={
+            <ProtectedRoute>
+              <Events />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/team-members"
+          element={
+            <ProtectedRoute>
+              <TeamMembers />
+            </ProtectedRoute>
+          }
+        />
+
         {/* 404 - Not Found */}
         <Route path="*" element={<NotFound />} />
       </Routes>

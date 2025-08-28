@@ -1,5 +1,5 @@
 import express from "express";
-import { acceptInvite, createTeam, getTeam, getUsers, inviteTeamMember, joinTeam } from "../controllers/user.controller";
+import { acceptInvite, createTeam, getTeam, getTeamInvites, getUsers, inviteTeamMember, joinTeam } from "../controllers/user.controller";
 import { authenticate } from "../middleware/auth.middleware";
 
 const router = express.Router();
@@ -12,4 +12,5 @@ router.post("/joinTeam",authenticate,joinTeam)
 router.post("/inviteTeamMember",authenticate,inviteTeamMember)
 router.post("/acceptInviteToTeam",authenticate,acceptInvite)
 router.get("/getTeam",authenticate,getTeam)
+router.get("/invites", authenticate, getTeamInvites);
 export default router;

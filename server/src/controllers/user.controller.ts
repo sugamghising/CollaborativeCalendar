@@ -132,7 +132,7 @@ export const inviteTeamMember = async (req: Request, res: Response) => {
     });
 
     if (!userTeam) {
-      res.status(403).json({ 
+      res.status(202).json({ 
         success: false, 
         message: "You do not have permission to invite team members" 
       });
@@ -143,16 +143,14 @@ export const inviteTeamMember = async (req: Request, res: Response) => {
     });
 
     if (!teamMember) {
-      res.status(404).json({ 
-        success: false, 
+      res.status(202).json({  
         message: "User with this email does not exist" 
       });
       return;
     }
 
     if (teamMember.id === userId) {
-      res.status(400).json({ 
-        success: false, 
+      res.status(202).json({ 
         message: "You cannot invite yourself to the team" 
       });
       return;
@@ -171,7 +169,7 @@ export const inviteTeamMember = async (req: Request, res: Response) => {
         ? "User already has a pending invitation" 
         : "User is already on the team";
       
-      res.status(409).json({ 
+      res.status(202).json({ 
         success: false, 
         message: statusMessage 
       });
@@ -261,6 +259,36 @@ export const acceptInvite = async (req: Request, res: Response) => {
   }
 };
 
+
+export const getTeamInvites = async (req: Request, res: Response) => {
+  const userId = req.user!.userId; // logged-in user
+
+  try {
+    const invites = await prisma.userTeam.findMany({
+      where: {
+        userId,
+        status: "PENDING", // only pending invites
+      },
+      include: {
+        Team: {
+          select: { id: true, name: true, inviteCode: true },
+        },
+      },
+      orderBy: {
+        id: "desc",
+      },
+    });
+
+    res.status(200).json({
+      message: "Team invites fetched successfully",
+      total: invites.length,
+      invites,
+    });
+  } catch (error) {
+    console.error("Error fetching team invites:", error);
+    res.status(500).json({ error: "Could not fetch team invites" });
+  }
+};
 
 
 
