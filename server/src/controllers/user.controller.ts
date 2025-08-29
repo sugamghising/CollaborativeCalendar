@@ -260,35 +260,41 @@ export const acceptInvite = async (req: Request, res: Response) => {
 };
 
 
-export const getTeamInvites = async (req: Request, res: Response) => {
-  const userId = req.user!.userId; // logged-in user
+export const getTeamInvites = async (req: Request, res: Response) => { 
+  const userId = req.user!.userId;
 
   try {
     const invites = await prisma.userTeam.findMany({
-      where: {
-        userId,
-        status: "PENDING", // only pending invites
-      },
-      include: {
+      where: { userId, status: "PENDING" },
+      select: {
+        id: true, // UserTeam id
         Team: {
-          select: { id: true, name: true, inviteCode: true },
+          select: {
+            id: true, // Team id
+            name: true,
+            user: {
+              where: { role: "LEADER" },
+              select: { User: { select: { name: true } } },
+            },
+          },
         },
       },
-      orderBy: {
-        id: "desc",
-      },
+      orderBy: { id: "desc" },
     });
 
-    res.status(200).json({
-      message: "Team invites fetched successfully",
-      total: invites.length,
-      invites,
-    });
+    const response = invites.map(invite => ({
+      id: invite.Team.id,      // <-- your required Team ID
+      teamName: invite.Team.name,
+      invitedBy: invite.Team.user[0]?.User.name ?? "Unknown",
+    }));
+
+    res.status(200).json(response);
   } catch (error) {
     console.error("Error fetching team invites:", error);
     res.status(500).json({ error: "Could not fetch team invites" });
   }
 };
+
 
 
 

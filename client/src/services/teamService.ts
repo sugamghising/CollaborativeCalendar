@@ -1,6 +1,42 @@
 import axios from "axios";
-import { log } from "console";
+const API_BASE_URL = 'http://localhost:5000/api';
 
+export const getUserInvites = async (token:string) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/user/invites`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      maxBodyLength: Infinity,
+    });
+    return response.data; // clean data return
+  } catch (error) {
+    console.error("Error fetching invites:");
+    throw error;
+  }
+};
+
+export const acceptInviteToTeam = async (teamId: string | number, token: string) => {
+  try {
+    console.log("->>>>>>>>>>>>")
+    console.log(teamId,token)
+    const response = await axios.post(
+      `${API_BASE_URL}/user/acceptInviteToTeam`,
+      { teamId },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error: any) {
+    console.error("Error accepting invite:", error.response?.data || error.message);
+    throw error;
+  }
+}
 const api = (token:string) =>
   axios.create({
     baseURL: "http://localhost:5000", // or from env
@@ -18,7 +54,7 @@ export const createTeam = async (token:string, teamName:string) => {
     });
     return response.data;
   } catch (error) {
-    console.error("Error creating team:", error.message);
+    console.error("Error creating team:",);
     throw error;
   }
 };
