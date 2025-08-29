@@ -33,7 +33,7 @@ const TeamMembers = () => {
     };
 
     fetchTeam();
-  }, [token]);
+  }, []);
 
   // Create new team
   const handleCreateTeamSubmit = async (e: React.FormEvent) => {
