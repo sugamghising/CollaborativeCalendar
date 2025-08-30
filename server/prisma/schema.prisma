@@ -8,15 +8,19 @@ datasource db {
 }
 
 model User {
-  id               Int               @id @default(autoincrement())
-  email            String            @unique
+  id               Int                  @id @default(autoincrement())
+  email            String               @unique
   password         String?
   name             String?
-  isVerified       Boolean           @default(false)
-  events           Event[]
+  isVerified       Boolean              @default(false)
   verificationcode Verificationcode?
   team             UserTeam[]
-  createdAt        DateTime          @default(now())
+  createdMeetings  Meeting[]            @relation("MeetingCreator")
+  meetingAttendees MeetingUser[]
+  schedule         IndividualSchedule[]
+  blockedTimes     BlockedTime[]
+
+  createdAt DateTime @default(now())
 }
 
 model Team {
@@ -24,6 +28,7 @@ model Team {
   name       String
   inviteCode String     @unique
   user       UserTeam[]
+  meetings   Meeting[]
 }
 
 model UserTeam {
@@ -39,13 +44,61 @@ model UserTeam {
   @@unique([userId, teamId])
 }
 
-model Event {
-  id        Int      @id @default(autoincrement())
-  title     String
-  date      DateTime
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id])
+model Meeting {
+  id          Int           @id @default(autoincrement())
+  title       String
+  duration    Int
+  priority    Priority      @default(MEDIUM)
+  deadline    DateTime?
+  scheduledAt DateTime?
+  status      MeetingStatus @default(PENDING)
+
+  teamId    Int
+  createdBy Int
+
+  team      Team          @relation(fields: [teamId], references: [id])
+  creator   User          @relation("MeetingCreator", fields: [createdBy], references: [id])
+  attendees MeetingUser[]
+
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MeetingUser {
+  id         Int     @id @default(autoincrement())
+  meetingId  Int
+  userId     Int
+  isRequired Boolean @default(true)
+
+  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@unique([meetingId, userId])
+}
+
+model IndividualSchedule {
+  id        Int          @id @default(autoincrement())
+  userId    Int
+  title     String
+  dayOfWeek Int
+  startTime String
+  endTime   String
+  type      ScheduleType @default(AVAILABLE)
+  isVisible Boolean      @default(true)
+  role      String
+  user      User         @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BlockedTime {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  title     String   @default("Busy")
+  startTime DateTime
+  endTime   DateTime
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 model Verificationcode {
@@ -74,4 +127,24 @@ enum inviteStatus {
 enum Role {
   MEMBER
   LEADER
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum MeetingStatus {
+  PENDING // Not scheduled yet
+  SCHEDULED // Time confirmed
+  COMPLETED // Meeting happened
+  CANCELLED // Meeting cancelled
+}
+
+enum ScheduleType {
+  AVAILABLE // "Free for meetings"
+  BUSY // "Working but prefer no meetings"
+  BREAK // "Lunch/coffee break"
+  PREFERRED // "Best time to meet with me"
 }

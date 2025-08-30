@@ -132,7 +132,7 @@ export const inviteTeamMember = async (req: Request, res: Response) => {
     });
 
     if (!userTeam) {
-      res.status(403).json({ 
+      res.status(202).json({ 
         success: false, 
         message: "You do not have permission to invite team members" 
       });
@@ -143,16 +143,14 @@ export const inviteTeamMember = async (req: Request, res: Response) => {
     });
 
     if (!teamMember) {
-      res.status(404).json({ 
-        success: false, 
+      res.status(202).json({  
         message: "User with this email does not exist" 
       });
       return;
     }
 
     if (teamMember.id === userId) {
-      res.status(400).json({ 
-        success: false, 
+      res.status(202).json({ 
         message: "You cannot invite yourself to the team" 
       });
       return;
@@ -171,7 +169,7 @@ export const inviteTeamMember = async (req: Request, res: Response) => {
         ? "User already has a pending invitation" 
         : "User is already on the team";
       
-      res.status(409).json({ 
+      res.status(202).json({ 
         success: false, 
         message: statusMessage 
       });
@@ -258,5 +256,115 @@ export const acceptInvite = async (req: Request, res: Response) => {
       
     });
      return
+  }
+};
+
+
+export const getTeamInvites = async (req: Request, res: Response) => { 
+  const userId = req.user!.userId;
+
+  try {
+    const invites = await prisma.userTeam.findMany({
+      where: { userId, status: "PENDING" },
+      select: {
+        id: true, // UserTeam id
+        Team: {
+          select: {
+            id: true, // Team id
+            name: true,
+            user: {
+              where: { role: "LEADER" },
+              select: { User: { select: { name: true } } },
+            },
+          },
+        },
+      },
+      orderBy: { id: "desc" },
+    });
+
+    const response = invites.map(invite => ({
+      id: invite.Team.id,      // <-- your required Team ID
+      teamName: invite.Team.name,
+      invitedBy: invite.Team.user[0]?.User.name ?? "Unknown",
+    }));
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.error("Error fetching team invites:", error);
+    res.status(500).json({ error: "Could not fetch team invites" });
+  }
+};
+
+
+
+
+export const getTeam = async (req: Request, res: Response) => {
+  const userId = req.user!.userId;
+  
+  try {
+    // Get user's team with team details and all team members
+    const userTeam = await prisma.userTeam.findFirst({
+      where: {
+        userId,
+        status: "ACCEPTED" // Only accepted memberships
+      },
+      include: {
+        Team: { // Fixed: Team not User (you want team info, not user info)
+          select: {
+            id: true,
+            name: true,
+            inviteCode: true,
+            user: { // Get all team members
+              where: {
+                status: "ACCEPTED"
+              },
+              include: {
+                User: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!userTeam) {
+      res.status(200).json({
+        message: "No team found",
+        team: null,
+        success: true // Fixed: success not succes
+      });
+      return;
+    }
+
+    res.status(200).json({ // Fixed: Added status code
+      message: "Team fetched successfully",
+      team: {
+        id: userTeam.Team.id,
+        name: userTeam.Team.name,
+        inviteCode: userTeam.Team.inviteCode,
+        members: userTeam.Team.user.map(member => ({
+          id: member.User.id,
+          name: member.User.name,
+          email: member.User.email,
+          role: member.role,
+          isActive: member.isActive
+        }))
+      },
+      success: true
+    });
+
+  } catch (error) {
+    console.log("Error fetching team:", error);
+    res.status(500).json({ // Fixed: Added status code
+      message: "Could not fetch team",
+      error: "Internal server error",
+      success: false
+    });
   }
 };

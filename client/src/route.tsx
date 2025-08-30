@@ -29,7 +29,7 @@ const LoadingSpinner = () => (
 // Public route wrapper
 const PublicRoute = ({ children, skipRedirect = false }: { children: React.ReactNode, skipRedirect?: boolean }) => {
   const { user, loading } = useAuth();
-  
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -37,7 +37,7 @@ const PublicRoute = ({ children, skipRedirect = false }: { children: React.React
   if (user && !skipRedirect) {
     return <Navigate to="/dashboard" replace />;
   }
-  
+
   return <>{children}</>;
 };
 
@@ -111,14 +111,17 @@ const AppRoutes = () => {
         } />
         
         <Route path="/unauthorized" element={<Unauthorized />} />
-        
+
         {/* Homepage - Public but redirects to dashboard if logged in */}
-        <Route path="/" element={
-          <PublicRoute>
-            <HomePage />
-          </PublicRoute>
-        } />
-        
+        <Route
+          path="/"
+          element={
+            <PublicRoute>
+              <HomePage />
+            </PublicRoute>
+          }
+        />
+
         {/* Protected Routes - Require authentication */}
         <Route path="/dashboard" element={
           <ProtectedRoute>

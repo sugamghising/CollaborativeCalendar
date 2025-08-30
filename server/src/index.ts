@@ -3,7 +3,8 @@ import dotenv from "dotenv";
 import userRoutes from "./routes/user.routes";
 import authRoutes from './routes/auth.routes';
 import cors from 'cors';
-// import eventRoutes from "./routes/event.routes";
+import eventRoutes from "./routes/event.routes";
+import scheduleRoutes from "./routes/schedule.routes";
 
 const app = express();
 dotenv.config();
@@ -27,7 +28,8 @@ app.get('/', (req: Request, res: Response) => {
 });
 app.use("/api/user", userRoutes);
 app.use("/api/auth", authRoutes);
-// app.use("/api/events", eventRoutes);
+app.use("/api/events", eventRoutes);
+app.use("/api/schedule", scheduleRoutes);
 
 
 

@@ -22,3 +22,11 @@ export const forgotPasswordfillSchema=z.object({
 export const joinTeamSchema=z.object({
     inviteCode:z.string().min(8)
 })
+export const createscheduleSchema=z.object({
+    title:z.string().min(3),
+    duration:z.number().min(30,"minimum 30 minutes"),
+    preferredStart:z.string().datetime(),
+    priority:z.enum(["LOW", "MEDIUM", "HIGH"]),
+    teamId: z.number().int().positive(),
+    attendeeIds: z.array(z.number().int().positive()).min(1, "Need at least one attendee")
+})
