@@ -1,6 +1,7 @@
 import React from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
+import UserSchedulePage from "./pages/UserSchedule";
 
 // Lazy load components for better performance
 const HomePage = React.lazy(() => import("./pages/Homepage"));
@@ -18,6 +19,7 @@ const Unauthorized = React.lazy(() => import("./pages/Unauthorized"));
 const NotFound = React.lazy(() => import("./pages/NotFound"));
 const VerifyEmail = React.lazy(() => import("./pages/VerifyEmail"));
 const CompleteSignup = React.lazy(() => import("./pages/CompleteSignup"));
+const TeamMembers = React.lazy(() => import("./pages/TeamMembers"));
 
 // Loading component for Suspense fallback
 const LoadingSpinner = () => (
@@ -82,7 +84,6 @@ const AppRoutes = () => {
             </PublicRoute>
           }
         />
-
         <Route
           path="/signup"
           element={
@@ -91,7 +92,6 @@ const AppRoutes = () => {
             </PublicRoute>
           }
         />
-
         <Route
           path="/forgot-password"
           element={
@@ -100,7 +100,6 @@ const AppRoutes = () => {
             </PublicRoute>
           }
         />
-
         <Route
           path="/verify-reset-code"
           element={
@@ -109,7 +108,6 @@ const AppRoutes = () => {
             </PublicRoute>
           }
         />
-
         <Route
           path="/reset-password"
           element={
@@ -118,7 +116,6 @@ const AppRoutes = () => {
             </PublicRoute>
           }
         />
-
         <Route
           path="/verify-email"
           element={
@@ -127,7 +124,6 @@ const AppRoutes = () => {
             </PublicRoute>
           }
         />
-
         <Route
           path="/complete-signup"
           element={
@@ -136,9 +132,7 @@ const AppRoutes = () => {
             </PublicRoute>
           }
         />
-
         <Route path="/unauthorized" element={<Unauthorized />} />
-
         {/* Homepage - Public but redirects to dashboard if logged in */}
         <Route
           path="/"
@@ -148,7 +142,6 @@ const AppRoutes = () => {
             </PublicRoute>
           }
         />
-
         {/* Protected Routes - Require authentication */}
         <Route
           path="/dashboard"
@@ -158,7 +151,6 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/events"
           element={
@@ -167,7 +159,6 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/events/new"
           element={
@@ -176,7 +167,6 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/profile"
           element={
@@ -185,7 +175,6 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/calendar"
           element={
@@ -194,7 +183,22 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
-
+        <Route
+          path="/team-members"
+          element={
+            <ProtectedRoute>
+              <TeamMembers />
+            </ProtectedRoute>
+          }
+        />{" "}
+        <Route
+          path="/my-schedule"
+          element={
+            <ProtectedRoute>
+              <UserSchedulePage />
+            </ProtectedRoute>
+          }
+        />
         {/* 404 - Not Found */}
         <Route path="*" element={<NotFound />} />
       </Routes>
