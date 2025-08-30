@@ -6,15 +6,18 @@ import { useAuth } from "./context/AuthContext";
 const HomePage = React.lazy(() => import("./pages/Homepage"));
 const Login = React.lazy(() => import("./pages/Login"));
 const SignUp = React.lazy(() => import("./pages/SignUp"));
+const ForgotPassword = React.lazy(() => import("./pages/ForgotPassword"));
+const VerifyResetCode = React.lazy(() => import("./pages/VerifyResetCode"));
+const ResetPassword = React.lazy(() => import("./pages/ResetPassword"));
 const Dashboard = React.lazy(() => import("./pages/Dashboard"));
 const Profile = React.lazy(() => import("./pages/Profile"));
 const Calendar = React.lazy(() => import("./pages/Calendar"));
 const Events = React.lazy(() => import("./pages/Events"));
+const CreateEvent = React.lazy(() => import("./pages/CreateEvent"));
 const Unauthorized = React.lazy(() => import("./pages/Unauthorized"));
 const NotFound = React.lazy(() => import("./pages/NotFound"));
 const VerifyEmail = React.lazy(() => import("./pages/VerifyEmail"));
 const CompleteSignup = React.lazy(() => import("./pages/CompleteSignup"));
-const TeamMembers = React.lazy(() => import("./pages/TeamMembers"));
 
 // Loading component for Suspense fallback
 const LoadingSpinner = () => (
@@ -157,6 +160,24 @@ const AppRoutes = () => {
         />
 
         <Route
+          path="/events"
+          element={
+            <ProtectedRoute>
+              <Events />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/events/new"
+          element={
+            <ProtectedRoute>
+              <CreateEvent />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/profile"
           element={
             <ProtectedRoute>
@@ -170,23 +191,6 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute>
               <Calendar />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/events"
-          element={
-            <ProtectedRoute>
-              <Events />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/team-members"
-          element={
-            <ProtectedRoute>
-              <TeamMembers />
             </ProtectedRoute>
           }
         />
