@@ -147,9 +147,6 @@ const TeamMembers = () => {
                   <p className="text-xs text-gray-500">{member.role}</p>
                 </div>
               </div>
-              <button className="text-sm text-red-500 hover:text-red-700">
-                Remove
-              </button>
             </div>
           ))}
         </div>

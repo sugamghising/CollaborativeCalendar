@@ -9,6 +9,7 @@ import {
   CheckIcon,
   XMarkIcon,
   BellIcon,
+  ClipboardDocumentCheckIcon,
 } from "@heroicons/react/24/outline";
 
 const Navbar = () => {
@@ -129,6 +130,13 @@ const Navbar = () => {
                 >
                   <UserGroupIcon className="h-5 w-5 mr-1" />
                   Team Members
+                </Link>
+                <Link
+                  to="/my-schedule"
+                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                >
+                  <ClipboardDocumentCheckIcon className="h-5 w-5 mr-1" />
+                  My Schedule
                 </Link>
               </div>
             )}
