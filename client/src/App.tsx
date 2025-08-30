@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { UserProvider } from './context/UserContext';
 import Navbar from './components/Navbar';
 import AppRoutes from './route';
 
@@ -22,9 +23,11 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <Layout>
-          <AppRoutes />
-        </Layout>
+        <UserProvider>
+          <Layout>
+            <AppRoutes />
+          </Layout>
+        </UserProvider>
       </AuthProvider>
     </Router>
   );

@@ -97,16 +97,44 @@ export const login = async (email: string, password: string) => {
         );
 
         // Handle the response based on server's actual response structure
-        if (response.data && response.data.SessionToken) {
+        if (response.data && (response.data.SessionToken || response.data.sessionToken)) {
             // Store the token in localStorage
-            localStorage.setItem('token', response.data.SessionToken);
+            const token = response.data.SessionToken || response.data.sessionToken;
+            localStorage.setItem('token', token);
+            
+            // Get user data from the response if available
+            let userData = null;
+            if (response.data.user) {
+                userData = response.data.user;
+            } else {
+                // If no user data in response, try to decode from token
+                try {
+                    const base64Url = token.split('.')[1];
+                    if (base64Url) {
+                        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                        const decodedToken = JSON.parse(window.atob(base64));
+                        userData = {
+                            id: decodedToken.userId || '',
+                            email: decodedToken.email || '',
+                            name: decodedToken.name || '',
+                            isAdmin: decodedToken.isAdmin || false,
+                            isVerified: decodedToken.isVerified || false,
+                            createdAt: new Date().toISOString(),
+                            updatedAt: new Date().toISOString()
+                        };
+                    }
+                } catch (e) {
+                    console.error('Error decoding token:', e);
+                }
+            }
             
             return { 
-                token: response.data.SessionToken,
+                token,
+                user: userData,
                 message: response.data.message || 'Login successful'
             };
         } else {
-            throw new Error('Invalid response from server');
+            throw new Error('Invalid response from server: No token found');
         }
     } catch (error: any) {
         if (error.response) {

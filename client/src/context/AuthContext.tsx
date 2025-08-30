@@ -9,6 +9,7 @@ interface User {
   name: string;
   isAdmin: boolean;
   isVerified: boolean;
+  teamId?: string;
   createdAt: string;
   updatedAt: string;
   // Add other user properties as needed
@@ -24,6 +25,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   error: string | null;
+  clearError: () => void;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, name: string, password: string) => Promise<void>;
   logout: () => void;
@@ -36,78 +38,111 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const TOKEN_KEY = 'auth_token';
+const USER_KEY = 'user_data';
+
+const getStoredAuthData = () => {
+  const token = localStorage.getItem(TOKEN_KEY);
+  const userStr = localStorage.getItem(USER_KEY);
+  let user = null;
+  
+  if (userStr) {
+    try {
+      user = JSON.parse(userStr);
+    } catch (e) {
+      console.error('Failed to parse stored user data', e);
+      localStorage.removeItem(USER_KEY);
+    }
+  }
+  
+  return { token, user };
+};
+
+const setAuthData = (token: string, user: User | null) => {
+  if (token) {
+    localStorage.setItem(TOKEN_KEY, token);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  }
+  
+  if (user) {
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+  }
+};
+
+const clearAuthData = () => {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
+  delete axios.defaults.headers.common['Authorization'];
+};
+
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    const { user } = getStoredAuthData();
+    return user;
+  });
+  
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const clearError = () => setError(null);
 
   // Check if user is already logged in on initial load
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        // Here you would typically verify the token with your backend
-        // For now, we'll just check if there's a token in localStorage
-        const token = localStorage.getItem('token');
-        if (token) {
-          // Verify token with backend and get user data
-          // const userData = await authService.verifyToken(token);
-          // setUser(userData);
-        }
-      } catch (err) {
-        console.error('Auth check failed:', err);
-        localStorage.removeItem('token');
-      } finally {
-        setLoading(false);
+    const { token, user: storedUser } = getStoredAuthData();
+    
+    if (token) {
+      setUser(storedUser);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
+      // Don't verify token immediately to prevent navigation loops
+      // Just set the user from stored data and let subsequent requests verify the token
+      setLoading(false);
+      
+      // If we're on the login or signup page, redirect to home
+      if (['/login', '/signup'].includes(location.pathname)) {
+        navigate('/', { replace: true });
       }
-    };
-
-    checkAuth();
-  }, []);
+    } else {
+      setLoading(false);
+      // Only redirect to login if not already there and not on a public route
+      if (!['/login', '/signup', '/forgot-password'].includes(location.pathname)) {
+        navigate('/login', { replace: true });
+      }
+    }
+  }, [navigate, location.pathname]);
 
   const login = async (email: string, password: string) => {
     setLoading(true);
     setError(null);
+    
     try {
-      const { token, message } = await authService.login(email, password);
+      const response = await authService.login(email, password);
       
-      if (token) {
-        // Store the token in localStorage
-        localStorage.setItem('token', token);
-        
-        // Set the default Authorization header for future requests
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
-        // Fetch user data using the token
-        try {
-          const userResponse = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/auth/me`, {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-          
-          setUser(userResponse.data);
-          navigate('/dashboard');
-        } catch (userError) {
-          console.error('Failed to fetch user data:', userError);
-          // Even if we can't get user data, we can still proceed with the token
-          setUser({
-            id: 'temp',
-            email,
-            name: 'User',
-            isAdmin: false,
-            isVerified: true,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          });
-          navigate('/dashboard');
-        }
-      } else {
-        throw new Error(message || 'Login failed: No token received');
+      if (!response || !response.token) {
+        throw new Error('No token received from server');
       }
+      
+      // Set the token in axios headers and local storage
+      const { token, user } = response;
+      
+      if (!user) {
+        throw new Error('No user data received');
+      }
+      
+      // Update state and storage
+      setUser(user);
+      setAuthData(token, user);
+      
+      // Redirect to home or previous location
+      const from = location.state?.from?.pathname || '/';
+      navigate(from, { replace: true });
+      
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || 'Login failed. Please check your credentials.';
+      const errorMessage = err.response?.data?.message || err.message || 'Login failed';
       setError(errorMessage);
+      clearAuthData();
       throw new Error(errorMessage);
     } finally {
       setLoading(false);
@@ -149,7 +184,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setError(null);
       const userData = await authService.completeSignup(name, password, token);
       setUser(userData);
-      localStorage.setItem('token', userData.token);
+      setAuthData(userData.token, userData);
       navigate('/');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to complete signup');
@@ -200,9 +235,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
+    clearAuthData();
     setUser(null);
-    navigate('/login');
+    navigate('/login', { replace: true });
   };
 
   const requestPasswordReset = async (email: string) => {
@@ -239,6 +274,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     user,
     loading,
     error,
+    clearError,
     login,
     signup,
     logout,

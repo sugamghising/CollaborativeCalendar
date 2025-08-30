@@ -1,0 +1,99 @@
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { forgotPassword } from '../services/authService';
+
+const ForgotPassword = () => {
+  const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setMessage('');
+    
+    if (!email) {
+      setError('Please enter your email address');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      await forgotPassword(email);
+      navigate(`/verify-reset-code?email=${encodeURIComponent(email)}`);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to send reset instructions');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="px-4 md:px-40 flex flex-1 justify-center py-5">
+      <div className="layout-content-container flex flex-col w-full md:w-[512px] py-5 max-w-[960px] flex-1">
+        <h2 className="text-[#0e1a13] tracking-light text-[28px] font-bold leading-tight px-4 text-center pb-3 pt-5">
+          Reset Your Password
+        </h2>
+        
+        <p className="text-[#0e1a13] text-base font-normal leading-normal px-4 text-center pb-6">
+          Enter your email address and we'll send you a link to reset your password.
+        </p>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+            {error}
+          </div>
+        )}
+
+        {message && (
+          <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-lg text-sm">
+            {message}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          <div className="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
+            <label className="flex flex-col min-w-40 flex-1">
+              <p className="text-[#0e1a13] text-base font-medium leading-normal pb-2">Email</p>
+              <input
+                type="email"
+                placeholder="Enter your email"
+                className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-[#0e1a13] focus:outline-0 focus:ring-0 border border-[#d1e6d9] bg-[#f8fbfa] focus:border-[#38e078] h-14 placeholder:text-[#51946b] p-[15px] text-base font-normal leading-normal"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </label>
+          </div>
+
+          <div className="flex px-4 py-6">
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="inline-flex justify-center items-center w-full px-6 py-3 bg-[#38e078] hover:bg-[#2bc76c] text-white text-base font-medium leading-normal rounded-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? 'Sending...' : 'Send Reset Link'}
+            </button>
+          </div>
+        </form>
+
+        <div className="text-center pt-4">
+          <p className="text-[#0e1a13] text-sm">
+            Remember your password?{' '}
+            <Link 
+              to="/login" 
+              className="text-[#38e078] hover:underline font-medium"
+            >
+              Back to Login
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ForgotPassword;

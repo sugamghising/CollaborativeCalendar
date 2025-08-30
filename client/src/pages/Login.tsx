@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -7,25 +7,34 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [localError, setLocalError] = useState('');
   
-  const { login } = useAuth();
+  const { login, error: authError, clearError } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Clear any previous errors when the component mounts
+    clearError?.();
+    setLocalError('');
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setLocalError('');
     setIsLoading(true);
 
     try {
       await login(email, password);
       navigate('/');
     } catch (err: any) {
-      setError(err.message || 'Failed to log in');
+      setLocalError(err.message || 'Failed to log in');
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Combine local and auth context errors
+  const errorMessage = localError || authError || '';
 
   return (
     <div className="px-4 md:px-40 flex flex-1 justify-center py-5">
@@ -34,9 +43,9 @@ const Login = () => {
           Welcome back
         </h2>
         
-        {error && (
+        {errorMessage && (
           <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
-            {error}
+            {errorMessage}
           </div>
         )}
 
