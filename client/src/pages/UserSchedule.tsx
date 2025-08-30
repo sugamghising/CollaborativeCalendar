@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import { getBlockTime, getIndividualSchedule } from "../services/schedule";
+import React, { useEffect, useState } from "react";
 
 const UserSchedulePage = () => {
   const [schedules, setSchedules] = useState([
@@ -33,6 +34,8 @@ const UserSchedulePage = () => {
       color: "bg-gradient-to-br from-green-500 to-emerald-500",
     },
   ]);
+  const [workHour, setWorkHour] = useState([]);
+  const [blockDataT, setBlockDataT] = useState([]);
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [showOfficeForm, setShowOfficeForm] = useState(false);
@@ -216,6 +219,39 @@ const UserSchedulePage = () => {
     }
   };
 
+  useEffect(() => {
+    const fetchSchedules = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        console.log("API Schedules:->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", token);
+        const data = await getIndividualSchedule(token!);
+        const blockData = await getBlockTime(token!);
+        setWorkHour(data.schedule[0]);
+        setBlockData(blockData.blockedTimes);
+        setBlockDataT(blockData.blockedTimes);
+
+        console.log("API Schedules:->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", data);
+        console.log(
+          "API block:->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>",
+          blockData.blockedTimes
+        );
+      } catch (err) {
+        console.error(err);
+        console.log("API Schedules:->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", err);
+      }
+    };
+
+    fetchSchedules();
+  }, []);
+  const formatDate = (timeString) => {
+    const date = new Date(timeString);
+    const day = date.getDate();
+    const month = date.toLocaleDateString("en-US", { month: "short" });
+    const weekday = date.toLocaleDateString("en-US", { weekday: "short" });
+
+    return { day, month, weekday };
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-25 to-teal-50">
       <div className="px-6 py-8 max-w-7xl mx-auto">
@@ -256,31 +292,81 @@ const UserSchedulePage = () => {
 
         {/* Schedule Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {schedules.map((schedule) => (
+          <div
+            key={workHour.id}
+            className="group bg-white rounded-3xl shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 overflow-hidden"
+          >
+            <div
+              className={`bg-gradient-to-br from-green-600 to-emerald-700 h-2`}
+            ></div>
+            <div className="p-6">
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex items-center gap-2 flex-1">
+                  <span className="text-lg">🏢</span>
+                  <h3 className="text-xl font-bold text-gray-800 leading-tight">
+                    Work Hour
+                  </h3>
+                </div>
+                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => handleDelete(workHour.id)}
+                    className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                  >
+                    <span className="text-sm">🗑️</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 text-gray-600">
+                  <div
+                    className={`bg-gradient-to-br from-green-600 to-emerald-700 p-2 rounded-xl flex-shrink-0`}
+                  >
+                    <span className="text-white text-sm">🕐</span>
+                  </div>
+                  <span className="font-medium text-sm">
+                    {workHour.startTime} - {workHour.endTime}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3 text-gray-600">
+                  <div
+                    className={`bg-gradient-to-br from-green-600 to-emerald-700 p-2 rounded-xl flex-shrink-0`}
+                  >
+                    <span className="text-white text-sm">👤</span>
+                  </div>
+                  <span className="font-medium text-sm">{workHour.role}</span>
+                </div>
+
+                <p className="text-gray-600 leading-relaxed pl-11 text-sm">
+                  from sunday to friday
+                </p>
+              </div>
+            </div>
+          </div>
+          {/* blocked schedule */}
+          {blockDataT.map((schedule) => (
             <div
               key={schedule.id}
               className="group bg-white rounded-3xl shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 overflow-hidden"
             >
-              <div className={`${schedule.color} h-2`}></div>
+              <div className={` h-2`}></div>
               <div className="p-6">
                 <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center gap-2 flex-1">
-                    <span className="text-lg">
-                      {getTypeIcon(schedule.type)}
-                    </span>
-                    <h3 className="text-xl font-bold text-gray-800 leading-tight">
-                      {schedule.title}
-                    </h3>
+                  <div
+                    className={`bg-gradient-to-br from-orange-500 to-red-500 shadow-orange-200 shadow-lg rounded-2xl p-4 text-white text-center min-w-[80px] transform group-hover:scale-110 transition-transform duration-300`}
+                  >
+                    <div className="text-xs font-semibold opacity-90 uppercase tracking-wide">
+                      {formatDate(schedule.startTime).weekday}
+                    </div>
+                    <div className="text-2xl font-bold leading-none mt-1">
+                      {formatDate(schedule.startTime).day}
+                    </div>
+                    <div className="text-xs font-medium opacity-90 uppercase mt-1">
+                      {formatDate(schedule.startTime).month}
+                    </div>
                   </div>
                   <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {schedule.type === "regular" && (
-                      <button
-                        onClick={() => handleEdit(schedule)}
-                        className="p-2 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
-                      >
-                        <span className="text-sm">✏️</span>
-                      </button>
-                    )}
                     <button
                       onClick={() => handleDelete(schedule.id)}
                       className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
@@ -289,12 +375,18 @@ const UserSchedulePage = () => {
                     </button>
                   </div>
                 </div>
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center gap-2 flex-1">
+                    <span className="text-lg"></span>
+                    <h3 className="text-xl font-bold text-gray-800 leading-tight">
+                      {schedule.title}
+                    </h3>
+                  </div>
+                </div>
 
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 text-gray-600">
-                    <div
-                      className={`${schedule.color} p-2 rounded-xl flex-shrink-0`}
-                    >
+                    <div className={` p-2 rounded-xl flex-shrink-0`}>
                       <span className="text-white text-sm">🕐</span>
                     </div>
                     <span className="font-medium text-sm">
@@ -304,16 +396,14 @@ const UserSchedulePage = () => {
                   </div>
 
                   <div className="flex items-center gap-3 text-gray-600">
-                    <div
-                      className={`${schedule.color} p-2 rounded-xl flex-shrink-0`}
-                    >
+                    <div className={` p-2 rounded-xl flex-shrink-0`}>
                       <span className="text-white text-sm">👤</span>
                     </div>
-                    <span className="font-medium text-sm">{schedule.role}</span>
+                    <span className="font-medium text-sm">ROle</span>
                   </div>
 
                   <p className="text-gray-600 leading-relaxed pl-11 text-sm">
-                    {schedule.description}
+                    des
                   </p>
                 </div>
               </div>
