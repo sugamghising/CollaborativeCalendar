@@ -5,14 +5,15 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 export interface Event {
   id: string;
   title: string;
-  description?: string;
-  startDate: string;
-  endDate: string;
-  location?: string;
-  teamId?: string;
+  duration: number;
+  preferredStart: string;
+  priority: 'LOW' | 'MEDIUM' | 'HIGH';
+  teamId: string;
+  attendeeIds: string[];
   creatorId: string;
   createdAt: string;
   updatedAt: string;
+  status?: 'SCHEDULED' | 'PENDING' | 'CANCELLED';
 }
 
 const getAuthConfig = () => ({
