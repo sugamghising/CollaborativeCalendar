@@ -1,21 +1,29 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { CalendarIcon, UserGroupIcon, ClockIcon, ChartBarIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
+import React from "react";
+import { Link } from "react-router-dom";
+import {
+  UserGroupIcon,
+  ClockIcon,
+  ChartBarIcon,
+  ArrowRightIcon,
+} from "@heroicons/react/24/outline";
 
 const features = [
   {
-    name: 'Team Collaboration',
-    description: 'Easily coordinate schedules with your team members in real-time.',
+    name: "Team Collaboration",
+    description:
+      "Easily coordinate schedules with your team members in real-time.",
     icon: UserGroupIcon,
   },
   {
-    name: 'Smart Scheduling',
-    description: 'Find the perfect meeting time that works for everyone automatically.',
+    name: "Smart Scheduling",
+    description:
+      "Find the perfect meeting time that works for everyone automatically.",
     icon: ClockIcon,
   },
   {
-    name: 'Event Analytics',
-    description: 'Gain insights into how your team spends time with visual reports.',
+    name: "Event Analytics",
+    description:
+      "Gain insights into how your team spends time with visual reports.",
     icon: ChartBarIcon,
   },
 ];
@@ -31,10 +39,14 @@ const Homepage = () => {
               <div className="sm:text-center lg:text-left">
                 <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
                   <span className="block">Collaborate with</span>
-                  <span className="block text-green-600">Your Team, Seamlessly</span>
+                  <span className="block text-green-600">
+                    Your Team, Seamlessly
+                  </span>
                 </h1>
                 <p className="mt-3 text-base text-gray-500 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
-                  The ultimate calendar solution for teams that need to stay in sync. Schedule meetings, track events, and manage your time better together.
+                  The ultimate calendar solution for teams that need to stay in
+                  sync. Schedule meetings, track events, and manage your time
+                  better together.
                 </p>
                 <div className="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
                   <div className="rounded-md shadow">
@@ -71,12 +83,15 @@ const Homepage = () => {
       <div className="py-12 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="lg:text-center">
-            <h2 className="text-base text-green-600 font-semibold tracking-wide uppercase">Features</h2>
+            <h2 className="text-base text-green-600 font-semibold tracking-wide uppercase">
+              Features
+            </h2>
             <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
               A better way to schedule together
             </p>
             <p className="mt-4 max-w-2xl text-xl text-gray-500 lg:mx-auto">
-              Our platform is designed to make team scheduling simple and efficient.
+              Our platform is designed to make team scheduling simple and
+              efficient.
             </p>
           </div>
 
@@ -88,9 +103,13 @@ const Homepage = () => {
                     <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-green-500 text-white">
                       <feature.icon className="h-6 w-6" aria-hidden="true" />
                     </div>
-                    <p className="ml-16 text-lg leading-6 font-medium text-gray-900">{feature.name}</p>
+                    <p className="ml-16 text-lg leading-6 font-medium text-gray-900">
+                      {feature.name}
+                    </p>
                   </dt>
-                  <dd className="mt-2 ml-16 text-base text-gray-500">{feature.description}</dd>
+                  <dd className="mt-2 ml-16 text-base text-gray-500">
+                    {feature.description}
+                  </dd>
                 </div>
               ))}
             </div>
@@ -113,7 +132,10 @@ const Homepage = () => {
             className="mt-8 w-full inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-green-600 bg-white hover:bg-green-50 sm:w-auto"
           >
             Sign up for free
-            <ArrowRightIcon className="ml-3 -mr-1 h-5 w-5 text-green-500" aria-hidden="true" />
+            <ArrowRightIcon
+              className="ml-3 -mr-1 h-5 w-5 text-green-500"
+              aria-hidden="true"
+            />
           </Link>
         </div>
       </div>

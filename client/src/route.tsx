@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import UserSchedulePage from "./pages/UserSchedule";
@@ -28,31 +28,36 @@ const LoadingSpinner = () => (
   </div>
 );
 
-// Public route wrapper
-const PublicRoute = ({
-  children,
-  skipRedirect = false,
-}: {
-  children: React.ReactNode;
-  skipRedirect?: boolean;
-}) => {
+// Auth route wrapper - redirects logged-in users to dashboard
+const AuthRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
+  const location = useLocation();
+  const lastRedirectRef = useRef<string | null>(null);
 
   if (loading) {
     return <LoadingSpinner />;
   }
 
-  if (user && !skipRedirect) {
+  // If user is already logged in, redirect to dashboard
+  if (user) {
+    if (lastRedirectRef.current === "/dashboard") {
+      console.warn("Prevented duplicate redirect to dashboard");
+      return <LoadingSpinner />;
+    }
+    lastRedirectRef.current = "/dashboard";
     return <Navigate to="/dashboard" replace />;
   }
 
+  // Reset redirect tracking when not authenticated
+  lastRedirectRef.current = null;
   return <>{children}</>;
 };
 
-// Protected route wrapper
+// Protected route wrapper with navigation throttling
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
+  const lastRedirectRef = useRef<string | null>(null);
 
   if (loading) {
     return (
@@ -62,86 +67,94 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  // If not authenticated, redirect to login but save the current location
+  // If not authenticated, redirect to login but prevent duplicate redirects
   if (!user) {
+    if (lastRedirectRef.current === "/login") {
+      console.warn("Prevented duplicate redirect to login");
+      return <LoadingSpinner />;
+    }
+    lastRedirectRef.current = "/login";
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // If authenticated, render the children
+  // Reset redirect tracking when authenticated
+  lastRedirectRef.current = null;
   return <>{children}</>;
 };
 
 const AppRoutes = () => {
+  const location = useLocation();
+
+  // Debug logging to track navigation
+  useEffect(() => {
+    console.log(`Navigated to: ${location.pathname}`);
+  }, [location.pathname]);
+
   return (
     <React.Suspense fallback={<LoadingSpinner />}>
       <Routes>
-        {/* Public Routes */}
+        {/* Homepage - Always accessible, no automatic redirect */}
+        <Route path="/" element={<HomePage />} />
+
+        {/* Auth Routes - Redirect logged-in users to dashboard */}
         <Route
           path="/login"
           element={
-            <PublicRoute>
+            <AuthRoute>
               <Login />
-            </PublicRoute>
+            </AuthRoute>
           }
         />
         <Route
           path="/signup"
           element={
-            <PublicRoute>
+            <AuthRoute>
               <SignUp />
-            </PublicRoute>
+            </AuthRoute>
           }
         />
         <Route
           path="/forgot-password"
           element={
-            <PublicRoute skipRedirect={true}>
+            <AuthRoute>
               <ForgotPassword />
-            </PublicRoute>
+            </AuthRoute>
           }
         />
         <Route
           path="/verify-reset-code"
           element={
-            <PublicRoute skipRedirect={true}>
+            <AuthRoute>
               <VerifyResetCode />
-            </PublicRoute>
+            </AuthRoute>
           }
         />
         <Route
           path="/reset-password"
           element={
-            <PublicRoute skipRedirect={true}>
+            <AuthRoute>
               <ResetPassword />
-            </PublicRoute>
+            </AuthRoute>
           }
         />
         <Route
           path="/verify-email"
           element={
-            <PublicRoute>
+            <AuthRoute>
               <VerifyEmail />
-            </PublicRoute>
+            </AuthRoute>
           }
         />
         <Route
           path="/complete-signup"
           element={
-            <PublicRoute>
+            <AuthRoute>
               <CompleteSignup />
-            </PublicRoute>
+            </AuthRoute>
           }
         />
         <Route path="/unauthorized" element={<Unauthorized />} />
-        {/* Homepage - Public but redirects to dashboard if logged in */}
-        <Route
-          path="/"
-          element={
-            <PublicRoute>
-              <HomePage />
-            </PublicRoute>
-          }
-        />
+
         {/* Protected Routes - Require authentication */}
         <Route
           path="/dashboard"
@@ -190,7 +203,7 @@ const AppRoutes = () => {
               <TeamMembers />
             </ProtectedRoute>
           }
-        />{" "}
+        />
         <Route
           path="/my-schedule"
           element={

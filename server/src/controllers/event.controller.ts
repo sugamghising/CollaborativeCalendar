@@ -114,7 +114,6 @@ export const createschedule = async (req: Request, res: Response) => {
         const availability = await checkTimeSlotAvailability(attendeeIds, preferredDate, preferredEndTime);
         
         if (availability.allAvailable) {
-            // Create meeting with preferred time
             const meeting = await prisma.meeting.create({
                 data: {
                     title,

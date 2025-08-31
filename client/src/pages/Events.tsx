@@ -211,7 +211,7 @@ const MeetingDashboard = () => {
                 </div>
               </div>
             </div>
-
+            {/* 
             <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-white/50 shadow-sm">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
@@ -224,7 +224,7 @@ const MeetingDashboard = () => {
                   </p>
                 </div>
               </div>
-            </div>
+            </div> */}
 
             <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-white/50 shadow-sm">
               <div className="flex items-center gap-3">
