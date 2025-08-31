@@ -97,7 +97,8 @@ const Navbar = () => {
           {/* Left side - Logo and main navigation */}
           <div className="flex items-center">
             <Link to="/" className="text-xl font-bold text-green-600">
-              TeamUp
+              <img src="/logo.png" alt="CollabMeet Logo" className="h-8 w-8" />
+              <span className="text-xl font-bold text-green-600">TeamUP</span>
             </Link>
 
             {/* Navigation links - only show when logged in */}
@@ -146,14 +147,6 @@ const Navbar = () => {
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
             {user ? (
               <div className="flex items-center">
-                <button
-                  type="button"
-                  className="bg-white p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                >
-                  <span className="sr-only">View notifications</span>
-                  <BellIcon className="h-6 w-6" />
-                </button>
-
                 {/* Invites button with relative positioning for dropdown */}
                 <div className="relative ml-2">
                   <button
@@ -168,7 +161,6 @@ const Navbar = () => {
                         {invites.length}
                       </span>
                     )}
-                    invites
                   </button>
 
                   {showInvites && (
