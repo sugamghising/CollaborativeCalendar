@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../components/layout/common/Button";
 import eventService from "../services/event.service";
 import { useAuth } from "../context/AuthContext";
-import { userService } from "../services/user.service";
+import { userService, User } from "../services/user.service";
 
 enum Priority {
   LOW = "LOW",
@@ -23,15 +23,51 @@ const CreateEvent: React.FC = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [teamMembers, setTeamMembers] = useState<User[]>([]);
+  const [selectedAttendees, setSelectedAttendees] = useState<string[]>([]);
+
+  // Fetch team members when component mounts
+  useEffect(() => {
+    const fetchTeamMembers = async () => {
+      try {
+        console.log("Fetching team members...");
+        const [teams] = await userService.getMyTeams();
+        console.log("Team data:", teams);
+        
+        if (teams && teams.members) {
+          // Filter out the current user from the team members list
+          const otherMembers = teams.members.filter(member => member.id !== user?.id);
+          console.log("Other team members:", otherMembers);
+          setTeamMembers(otherMembers);
+        } else {
+          console.log("No team members found");
+          setError("No team members found");
+        }
+      } catch (err) {
+        console.error("Error fetching team members:", err);
+        setError("Failed to fetch team members");
+      }
+    };
+
+    fetchTeamMembers();
+  }, [user?.id]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    console.log(error);
     setFormData((prev) => ({
       ...prev,
       [name]: value,
+    }));
+  };
+
+  const handleAttendeeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedOptions = Array.from(e.target.selectedOptions).map(option => option.value);
+    setSelectedAttendees(selectedOptions);
+    setFormData(prev => ({
+      ...prev,
+      attendees: selectedOptions
     }));
   };
 
@@ -63,14 +99,8 @@ const CreateEvent: React.FC = () => {
     setIsLoading(true);
 
     try {
-      if (!user?.teamId) {
-        setError("You must be part of a team to create an event");
-        return;
-      }
-
       // Get team members to map emails to user IDs
-      const teams = await userService.getMyTeams();
-      const currentTeam = teams.find(team => team.id === user.teamId);
+      const [currentTeam] = await userService.getMyTeams();
       
       if (!currentTeam) {
         setError("Could not find your team");
@@ -92,12 +122,17 @@ const CreateEvent: React.FC = () => {
         duration: Number(formData.duration),
         preferredStart: new Date(formData.preferredStart).toISOString(),
         priority: formData.priority,
-        teamId: user.teamId,
+        teamId: currentTeam.id,
         attendeeIds,
       };
       console.log("eventData", eventData);
-      await eventService.create(eventData);
-      navigate("/events");
+      const response = await eventService.create(eventData);
+      
+      if (response.success) {
+        navigate("/events");
+      } else {
+        setError(response.message || "Failed to create event");
+      }
     } catch (err: any) {
       console.error("Error creating event:", err);
       setError(err.response?.data?.message || "Failed to create event");
@@ -194,21 +229,43 @@ const CreateEvent: React.FC = () => {
             htmlFor="attendees"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            Attendees (comma-separated emails) *
+            Select Attendees *
           </label>
-          <input
-            type="text"
-            id="attendees"
-            name="attendees"
-            value={formData.attendees.join(", ")}
-            onChange={(e) => {
-              const emails = e.target.value.split(",").map(email => email.trim()).filter(email => email);
-              setFormData(prev => ({ ...prev, attendees: emails }));
-            }}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            placeholder="email1@example.com, email2@example.com"
-            required
-          />
+          <div className="space-y-2">
+            {teamMembers.map((member) => (
+              <div key={member.id} className="flex items-center">
+                <input
+                  type="checkbox"
+                  id={`attendee-${member.id}`}
+                  value={member.email}
+                  checked={selectedAttendees.includes(member.email)}
+                  onChange={(e) => {
+                    const email = e.target.value;
+                    setSelectedAttendees(prev => {
+                      if (e.target.checked) {
+                        return [...prev, email];
+                      } else {
+                        return prev.filter(a => a !== email);
+                      }
+                    });
+                    setFormData(prev => ({
+                      ...prev,
+                      attendees: e.target.checked 
+                        ? [...prev.attendees, email]
+                        : prev.attendees.filter(a => a !== email)
+                    }));
+                  }}
+                  className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                />
+                <label htmlFor={`attendee-${member.id}`} className="ml-2 block text-sm text-gray-900">
+                  {member.name} ({member.email})
+                </label>
+              </div>
+            ))}
+          </div>
+          {teamMembers.length === 0 && (
+            <p className="text-sm text-gray-500 mt-2">No other team members available</p>
+          )}
         </div>
 
         <div className="flex justify-end space-x-4 pt-4">

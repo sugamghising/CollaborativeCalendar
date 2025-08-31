@@ -81,8 +81,9 @@ export const userService = {
 
   // Get current user's teams
   getMyTeams: async (): Promise<Team[]> => {
-    const response = await axios.get(`${API_URL}/users/me/teams`, getAuthConfig());
-    return response.data;
+    const response = await axios.get(`${API_URL}/user/getTeam`, getAuthConfig());
+    const teamData = response.data.team;
+    return teamData ? [teamData] : [];
   },
 
   // Get user's pending invites

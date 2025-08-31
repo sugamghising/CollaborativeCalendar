@@ -16,6 +16,21 @@ export interface Event {
   status?: 'SCHEDULED' | 'PENDING' | 'CANCELLED';
 }
 
+export interface CreateScheduleRequest {
+  title: string;
+  duration: number;
+  preferredStart: string;
+  priority: 'LOW' | 'MEDIUM' | 'HIGH';
+  teamId: string;
+  attendeeIds: string[];
+}
+
+export interface CreateScheduleResponse {
+  success: boolean;
+  message: string;
+  meeting?: Event;
+}
+
 const getAuthConfig = () => ({
   headers: {
     Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -24,13 +39,15 @@ const getAuthConfig = () => ({
 });
 
 const eventService = {
-  // Create a new event
-  create: async (eventData: Omit<Event, 'id' | 'creatorId' | 'createdAt' | 'updatedAt'>): Promise<Event> => {
+  // Create a new event schedule
+  create: async (eventData: CreateScheduleRequest): Promise<CreateScheduleResponse> => {
+    console.log(eventData);
     const response = await axios.post(
-      `${API_URL}/events`,
+      `${API_URL}/events/createschedule`,
       eventData,
       getAuthConfig()
     );
+
     return response.data;
   },
 
