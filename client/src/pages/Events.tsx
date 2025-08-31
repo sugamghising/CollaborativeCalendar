@@ -1,198 +1,361 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { format } from 'date-fns';
+import React, { useState, useEffect, useMemo } from "react";
 import {
   CalendarIcon,
   ClockIcon,
-  FunnelIcon,
+  UsersIcon,
   MagnifyingGlassIcon,
+  ExclamationTriangleIcon,
+  CheckCircleIcon,
+  XCircleIcon,
   PlusIcon,
-  AdjustmentsHorizontalIcon,
-} from '@heroicons/react/24/outline';
+} from "@heroicons/react/24/outline";
 
-type EventStatus = 'upcoming' | 'past' | 'all';
-type SortBy = 'date' | 'title';
+const MeetingDashboard = () => {
+  const [meetings, setMeetings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [priorityFilter, setPriorityFilter] = useState("ALL");
+  const [sortBy, setSortBy] = useState("date");
 
-interface Event {
-  id: string;
-  title: string;
-  description: string;
-  startDate: Date;
-  endDate: Date;
-  location?: string;
-  organizer: string;
-  status: 'upcoming' | 'past';
-}
+  // Fetch meetings from API
+  useEffect(() => {
+    const fetchMeetings = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(
+          "http://localhost:5000/api/events/getmeetings",
+          {
+            method: "GET",
+            headers: {
+              Authorization:
+                "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMsImlhdCI6MTc1NjY0MDA2MCwiZXhwIjoxNzU3MjQ0ODYwfQ.UPLghITvdVdosdpMirn-lqooh0eqR-qxzCFpR3bHqLc",
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
-const Events = () => {
-  const navigate = useNavigate();
-  const [statusFilter, setStatusFilter] = useState<EventStatus>('upcoming');
-  const [sortBy, setSortBy] = useState<SortBy>('date');
-  const [searchQuery, setSearchQuery] = useState('');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
-  // Mock data - replace with API call in a real application
-  const events: Event[] = [
-    {
-      id: '1',
-      title: 'Team Standup',
-      description: 'Daily standup meeting with the development team',
-      startDate: new Date(2025, 7, 1, 10, 0),
-      endDate: new Date(2025, 7, 1, 10, 30),
-      organizer: 'John Doe',
-      status: 'upcoming',
-    },
-    {
-      id: '2',
-      title: 'Project Planning',
-      description: 'Planning session for Q3 projects',
-      startDate: new Date(2025, 7, 5, 14, 0),
-      endDate: new Date(2025, 7, 5, 16, 0),
-      location: 'Conference Room A',
-      organizer: 'Jane Smith',
-      status: 'upcoming',
-    },
-    {
-      id: '3',
-      title: 'Code Review',
-      description: 'Review of recent pull requests',
-      startDate: new Date(2025, 6, 28, 11, 0),
-      endDate: new Date(2025, 6, 28, 12, 0),
-      organizer: 'Mike Johnson',
-      status: 'past',
-    },
-  ];
-
-  const filteredEvents = events
-    .filter((event) => {
-      const matchesStatus = statusFilter === 'all' || event.status === statusFilter;
-      const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        event.description.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesStatus && matchesSearch;
-    })
-    .sort((a, b) => {
-      if (sortBy === 'date') {
-        return a.startDate.getTime() - b.startDate.getTime();
+        const data = await response.json();
+        setMeetings(data.meetings || []);
+        setError(null);
+      } catch (err) {
+        setError("Failed to fetch meetings: " + err.message);
+        console.error("Error fetching meetings:", err);
+      } finally {
+        setLoading(false);
       }
-      return a.title.localeCompare(b.title);
+    };
+
+    fetchMeetings();
+  }, []);
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case "SCHEDULED":
+        return <CheckCircleIcon className="w-4 h-4 text-green-500" />;
+      case "CANCELLED":
+        return <XCircleIcon className="w-4 h-4 text-red-500" />;
+      case "PENDING":
+        return <ExclamationTriangleIcon className="w-4 h-4 text-yellow-500" />;
+      default:
+        return <ExclamationTriangleIcon className="w-4 h-4 text-gray-500" />;
+    }
+  };
+
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case "HIGH":
+        return "bg-red-100 text-red-800 border-red-200";
+      case "MEDIUM":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case "LOW":
+        return "bg-gray-100 text-gray-800 border-gray-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "Not scheduled";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      weekday: "short",
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const filteredAndSortedMeetings = useMemo(() => {
+    let filtered = meetings.filter((meeting) => {
+      const matchesSearch =
+        meeting.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        meeting.team.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus =
+        statusFilter === "ALL" || meeting.status === statusFilter;
+      const matchesPriority =
+        priorityFilter === "ALL" || meeting.priority === priorityFilter;
+
+      return matchesSearch && matchesStatus && matchesPriority;
     });
 
+    return filtered.sort((a, b) => {
+      switch (sortBy) {
+        case "date":
+          if (!a.scheduledAt && !b.scheduledAt) return 0;
+          if (!a.scheduledAt) return 1;
+          if (!b.scheduledAt) return -1;
+          return new Date(a.scheduledAt) - new Date(b.scheduledAt);
+        case "priority":
+          const priorityOrder = { HIGH: 3, MEDIUM: 2, LOW: 1 };
+          return priorityOrder[b.priority] - priorityOrder[a.priority];
+        case "status":
+          return a.status.localeCompare(b.status);
+        default:
+          return a.id - b.id;
+      }
+    });
+  }, [meetings, searchTerm, statusFilter, priorityFilter, sortBy]);
+
+  const getStatusCounts = () => {
+    const counts = meetings.reduce((acc, meeting) => {
+      acc[meeting.status] = (acc[meeting.status] || 0) + 1;
+      return acc;
+    }, {});
+    return counts;
+  };
+
+  const statusCounts = getStatusCounts();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading meetings...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-8 border border-white/50 shadow-lg text-center max-w-md">
+          <XCircleIcon className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Error Loading Meetings
+          </h3>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">Events</h1>
-          <p className="text-gray-600">Manage and view all your events in one place</p>
-        </div>
-        <button
-          onClick={() => navigate('/events/new')}
-          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center gap-2"
-        >
-          <PlusIcon className="h-5 w-5" />
-          <span>Create Event</span>
-        </button>
-      </div>
-
-      {/* Filters and Search */}
-      <div className="bg-white rounded-lg shadow p-4 mb-6">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="relative flex-1">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      <div className="container mx-auto px-6 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+              <CalendarIcon className="w-6 h-6 text-white" />
             </div>
-            <input
-              type="text"
-              placeholder="Search events..."
-              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          
-          <div className="flex gap-2">
-            <div className="relative">
-              <select
-                className="appearance-none bg-white border border-gray-300 rounded-md pl-3 pr-8 py-2 text-base focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as EventStatus)}
-              >
-                <option value="upcoming">Upcoming</option>
-                <option value="past">Past</option>
-                <option value="all">All Events</option>
-              </select>
-              <FunnelIcon className="h-4 w-4 text-gray-400 absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none" />
-            </div>
-            
-            <div className="relative">
-              <select
-                className="appearance-none bg-white border border-gray-300 rounded-md pl-3 pr-8 py-2 text-base focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as SortBy)}
-              >
-                <option value="date">Sort by Date</option>
-                <option value="title">Sort by Title</option>
-              </select>
-              <AdjustmentsHorizontalIcon className="h-4 w-4 text-gray-400 absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none" />
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Meeting Dashboard
+              </h1>
+              <p className="text-gray-600">
+                Manage your team meetings and events
+              </p>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Events List */}
-      <div className="space-y-4">
-        {filteredEvents.length > 0 ? (
-          filteredEvents.map((event) => (
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-white/50 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <CalendarIcon className="w-4 h-4 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Total Meetings</p>
+                  <p className="text-xl font-semibold text-gray-900">
+                    {meetings.length}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-white/50 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                  <CheckCircleIcon className="w-4 h-4 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Scheduled</p>
+                  <p className="text-xl font-semibold text-gray-900">
+                    {statusCounts.SCHEDULED || 0}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-white/50 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                  <ExclamationTriangleIcon className="w-4 h-4 text-yellow-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Pending</p>
+                  <p className="text-xl font-semibold text-gray-900">
+                    {statusCounts.PENDING || 0}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-white/50 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                  <XCircleIcon className="w-4 h-4 text-red-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Cancelled</p>
+                  <p className="text-xl font-semibold text-gray-900">
+                    {statusCounts.CANCELLED || 0}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Meeting Cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          {filteredAndSortedMeetings.map((meeting) => (
             <div
-              key={event.id}
-              className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => navigate(`/events/${event.id}`)}
+              key={meeting.id}
+              className="bg-white/80 backdrop-blur-sm rounded-xl border border-white/50 shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-105 overflow-hidden"
             >
-              <div className="flex flex-col md:flex-row md:items-center justify-between">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900">{event.title}</h3>
-                  <p className="text-gray-600 mt-1">{event.description}</p>
-                  <div className="mt-2 flex flex-wrap gap-4 text-sm text-gray-500">
-                    <div className="flex items-center">
-                      <CalendarIcon className="h-4 w-4 mr-1" />
-                      <span>{format(event.startDate, 'MMM d, yyyy')}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <ClockIcon className="h-4 w-4 mr-1" />
-                      <span>
-                        {format(event.startDate, 'h:mm a')} - {format(event.endDate, 'h:mm a')}
-                      </span>
-                    </div>
-                    {event.location && (
-                      <div className="flex items-center">
-                        <span className="text-gray-400">•</span>
-                        <span className="ml-2">{event.location}</span>
-                      </div>
-                    )}
+              {/* Card Header */}
+              <div className="p-6 pb-4">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    {getStatusIcon(meeting.status)}
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {meeting.title}
+                    </h3>
+                  </div>
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(
+                      meeting.priority
+                    )}`}
+                  >
+                    {meeting.priority}
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  {/* Team */}
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <UsersIcon className="w-4 h-4" />
+                    <span className="capitalize">{meeting.team.name}</span>
+                  </div>
+
+                  {/* Duration */}
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <ClockIcon className="w-4 h-4" />
+                    <span>{meeting.duration} minutes</span>
+                  </div>
+
+                  {/* Scheduled Time */}
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <CalendarIcon className="w-4 h-4" />
+                    <span>{formatDate(meeting.scheduledAt)}</span>
                   </div>
                 </div>
-                <div className="mt-4 md:mt-0 md:ml-4">
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                    event.status === 'upcoming' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {event.status === 'upcoming' ? 'Upcoming' : 'Past'}
+              </div>
+
+              {/* Attendees */}
+              <div className="px-6 pb-4">
+                <p className="text-sm font-medium text-gray-700 mb-2">
+                  Attendees ({meeting.attendees.length})
+                </p>
+                <div className="space-y-1">
+                  {meeting.attendees.slice(0, 2).map((attendee, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-medium">
+                        {attendee.user.name.charAt(0).toUpperCase()}
+                      </div>
+                      <span className="text-sm text-gray-600">
+                        {attendee.user.name}
+                      </span>
+                      {attendee.isRequired && (
+                        <span className="text-xs text-red-500">*</span>
+                      )}
+                    </div>
+                  ))}
+                  {meeting.attendees.length > 2 && (
+                    <p className="text-xs text-gray-500 ml-8">
+                      +{meeting.attendees.length - 2} more
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Card Footer */}
+              <div className="bg-gray-50/80 backdrop-blur-sm px-6 py-3 border-t border-gray-100">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">
+                    Created by {meeting.creator.name}
+                  </span>
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      meeting.status === "SCHEDULED"
+                        ? "bg-green-100 text-green-700"
+                        : meeting.status === "PENDING"
+                        ? "bg-yellow-100 text-yellow-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
+                  >
+                    {meeting.status}
                   </span>
                 </div>
               </div>
             </div>
-          ))
-        ) : (
+          ))}
+        </div>
+
+        {/* Empty State */}
+        {!loading && filteredAndSortedMeetings.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-500">No events found matching your criteria.</p>
-            <button
-              onClick={() => {
-                setStatusFilter('all');
-                setSearchQuery('');
-              }}
-              className="mt-4 text-green-600 hover:text-green-800 font-medium"
-            >
-              Clear filters
-            </button>
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CalendarIcon className="w-8 h-8 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              {meetings.length === 0
+                ? "No meeting set yet"
+                : "No meetings found"}
+            </h3>
+            <p className="text-gray-600">
+              {meetings.length === 0
+                ? "Create your first meeting to get started."
+                : "Try adjusting your search or filter criteria."}
+            </p>
           </div>
         )}
       </div>
@@ -200,4 +363,4 @@ const Events = () => {
   );
 };
 
-export default Events;
+export default MeetingDashboard;
