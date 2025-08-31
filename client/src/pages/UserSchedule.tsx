@@ -201,58 +201,54 @@ const UserSchedulePage = () => {
 
         {/* Schedule Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <div
-            key={workHour.id}
-            className="group bg-white rounded-3xl shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 overflow-hidden"
-          >
+          {workHour && (
             <div
-              className={`bg-gradient-to-br from-green-600 to-emerald-700 h-2`}
-            ></div>
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex items-center gap-2 flex-1">
-                  <span className="text-lg">🏢</span>
-                  <h3 className="text-xl font-bold text-gray-800 leading-tight">
-                    Work Hour
-                  </h3>
-                </div>
-                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => handleDelete(workHour.id)}
-                    className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
-                  >
-                    <span className="text-sm">🗑️</span>
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center gap-3 text-gray-600">
-                  <div
-                    className={`bg-gradient-to-br from-green-600 to-emerald-700 p-2 rounded-xl flex-shrink-0`}
-                  >
-                    <span className="text-white text-sm">🕐</span>
+              key={workHour.id}
+              className="group bg-white rounded-3xl shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 overflow-hidden"
+            >
+              <div className="bg-gradient-to-br from-green-600 to-emerald-700 h-2"></div>
+              <div className="p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center gap-2 flex-1">
+                    <span className="text-lg">🏢</span>
+                    <h3 className="text-xl font-bold text-gray-800 leading-tight">
+                      Work Hour
+                    </h3>
                   </div>
-                  <span className="font-medium text-sm">
-                    {workHour.startTime} - {workHour.endTime}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-3 text-gray-600">
-                  <div
-                    className={`bg-gradient-to-br from-green-600 to-emerald-700 p-2 rounded-xl flex-shrink-0`}
-                  >
-                    <span className="text-white text-sm">👤</span>
+                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => handleDelete(workHour.id)}
+                      className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                    >
+                      <span className="text-sm">🗑️</span>
+                    </button>
                   </div>
-                  <span className="font-medium text-sm">{workHour.role}</span>
                 </div>
 
-                <p className="text-gray-600 leading-relaxed pl-11 text-sm">
-                  from sunday to friday
-                </p>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 text-gray-600">
+                    <div className="bg-gradient-to-br from-green-600 to-emerald-700 p-2 rounded-xl flex-shrink-0">
+                      <span className="text-white text-sm">🕐</span>
+                    </div>
+                    <span className="font-medium text-sm">
+                      {workHour.startTime} - {workHour.endTime}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-3 text-gray-600">
+                    <div className="bg-gradient-to-br from-green-600 to-emerald-700 p-2 rounded-xl flex-shrink-0">
+                      <span className="text-white text-sm">👤</span>
+                    </div>
+                    <span className="font-medium text-sm">{workHour.role}</span>
+                  </div>
+
+                  <p className="text-gray-600 leading-relaxed pl-11 text-sm">
+                    from sunday to friday
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
           {/* blocked schedule */}
           {blockDataT.map((schedule) => (
             <div
@@ -303,17 +299,6 @@ const UserSchedulePage = () => {
                       {formatTime(schedule.endTime)}
                     </span>
                   </div>
-
-                  <div className="flex items-center gap-3 text-gray-600">
-                    <div className={` p-2 rounded-xl flex-shrink-0`}>
-                      <span className="text-white text-sm">👤</span>
-                    </div>
-                    <span className="font-medium text-sm">ROle</span>
-                  </div>
-
-                  <p className="text-gray-600 leading-relaxed pl-11 text-sm">
-                    des
-                  </p>
                 </div>
               </div>
             </div>
