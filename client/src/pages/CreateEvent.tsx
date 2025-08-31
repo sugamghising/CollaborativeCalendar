@@ -8,7 +8,7 @@ import { userService, User } from "../services/user.service";
 enum Priority {
   LOW = "LOW",
   MEDIUM = "MEDIUM",
-  HIGH = "HIGH"
+  HIGH = "HIGH",
 }
 
 const CreateEvent: React.FC = () => {
@@ -19,26 +19,36 @@ const CreateEvent: React.FC = () => {
     preferredStart: "",
     duration: 30, // default duration in minutes
     priority: Priority.MEDIUM,
-    attendees: [] as string[],
+    attendeeIds: [] as number[],
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [teamMembers, setTeamMembers] = useState<User[]>([]);
-  const [selectedAttendees, setSelectedAttendees] = useState<string[]>([]);
+  const [selectedAttendeeIds, setSelectedAttendeeIds] = useState<number[]>([]);
+  const [teamId, setTeamId] = useState<number | null>(null);
 
   // Fetch team members when component mounts
   useEffect(() => {
     const fetchTeamMembers = async () => {
       try {
         console.log("Fetching team members...");
-        const [teams] = await userService.getMyTeams();
-        console.log("Team data:", teams);
-        
-        if (teams && teams.members) {
+        const teamsResponse = await userService.getMyTeams();
+        console.log("Teams response:", teamsResponse);
+
+        // Check if response is an array and get the first team
+        const firstTeam = Array.isArray(teamsResponse)
+          ? teamsResponse[0]
+          : teamsResponse;
+        console.log("First team:", firstTeam);
+
+        if (firstTeam && firstTeam.members) {
           // Filter out the current user from the team members list
-          const otherMembers = teams.members.filter(member => member.id !== user?.id);
+          const otherMembers = firstTeam.members.filter(
+            (member) => member.id !== user?.id
+          );
           console.log("Other team members:", otherMembers);
-          setTeamMembers(otherMembers);
+          setTeamMembers(firstTeam.members); // Show all members including current user
+          setTeamId(firstTeam.id); // Store the team ID
         } else {
           console.log("No team members found");
           setError("No team members found");
@@ -53,7 +63,9 @@ const CreateEvent: React.FC = () => {
   }, [user?.id]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -62,12 +74,23 @@ const CreateEvent: React.FC = () => {
     }));
   };
 
-  const handleAttendeeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedOptions = Array.from(e.target.selectedOptions).map(option => option.value);
-    setSelectedAttendees(selectedOptions);
-    setFormData(prev => ({
+  const handleAttendeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const attendeeId = parseInt(e.target.value);
+    const isChecked = e.target.checked;
+
+    setSelectedAttendeeIds((prev) => {
+      if (isChecked) {
+        return [...prev, attendeeId];
+      } else {
+        return prev.filter((id) => id !== attendeeId);
+      }
+    });
+
+    setFormData((prev) => ({
       ...prev,
-      attendees: selectedOptions
+      attendeeIds: isChecked
+        ? [...prev.attendeeIds, attendeeId]
+        : prev.attendeeIds.filter((id) => id !== attendeeId),
     }));
   };
 
@@ -91,43 +114,37 @@ const CreateEvent: React.FC = () => {
       return;
     }
 
-    if (formData.attendees.length === 0) {
+    if (formData.attendeeIds.length === 0) {
       setError("At least one attendee is required");
+      return;
+    }
+
+    if (!teamId) {
+      setError("Team ID not found");
       return;
     }
 
     setIsLoading(true);
 
     try {
-      // Get team members to map emails to user IDs
-      const [currentTeam] = await userService.getMyTeams();
-      
-      if (!currentTeam) {
-        setError("Could not find your team");
-        return;
-      }
-
-      const teamMembers = currentTeam.members;
-      const attendeeIds = formData.attendees
-        .map(email => teamMembers.find(member => member.email.toLowerCase() === email.toLowerCase())?.id)
-        .filter((id): id is string => id !== undefined);
-
-      if (attendeeIds.length !== formData.attendees.length) {
-        setError("Some attendee emails do not match team members");
-        return;
-      }
+      // Convert the datetime-local value to ISO string format
+      const preferredStartISO = new Date(formData.preferredStart).toISOString();
 
       const eventData = {
         title: formData.title,
         duration: Number(formData.duration),
-        preferredStart: new Date(formData.preferredStart).toISOString(),
+        preferredStart: preferredStartISO,
         priority: formData.priority,
-        teamId: currentTeam.id,
-        attendeeIds,
+        teamId: teamId,
+        attendeeIds: formData.attendeeIds,
       };
+
       console.log("eventData", eventData);
+
+      // Make sure your eventService.create method calls the correct endpoint
+      // It should POST to /api/events/createschedule
       const response = await eventService.create(eventData);
-      
+
       if (response.success) {
         navigate("/events");
       } else {
@@ -144,6 +161,12 @@ const CreateEvent: React.FC = () => {
   return (
     <div className="max-w-2xl mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">Create New Event</h1>
+
+      {error && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+          <p className="text-red-600 text-sm">{error}</p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
@@ -225,46 +248,38 @@ const CreateEvent: React.FC = () => {
         </div>
 
         <div>
-          <label
-            htmlFor="attendees"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
+          <label className="block text-sm font-medium text-gray-700 mb-3">
             Select Attendees *
           </label>
-          <div className="space-y-2">
+          <div className="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md p-3">
             {teamMembers.map((member) => (
               <div key={member.id} className="flex items-center">
                 <input
                   type="checkbox"
                   id={`attendee-${member.id}`}
-                  value={member.email}
-                  checked={selectedAttendees.includes(member.email)}
-                  onChange={(e) => {
-                    const email = e.target.value;
-                    setSelectedAttendees(prev => {
-                      if (e.target.checked) {
-                        return [...prev, email];
-                      } else {
-                        return prev.filter(a => a !== email);
-                      }
-                    });
-                    setFormData(prev => ({
-                      ...prev,
-                      attendees: e.target.checked 
-                        ? [...prev.attendees, email]
-                        : prev.attendees.filter(a => a !== email)
-                    }));
-                  }}
+                  value={member.id}
+                  checked={selectedAttendeeIds.includes(member.id)}
+                  onChange={handleAttendeeChange}
                   className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
                 />
-                <label htmlFor={`attendee-${member.id}`} className="ml-2 block text-sm text-gray-900">
+                <label
+                  htmlFor={`attendee-${member.id}`}
+                  className="ml-3 block text-sm text-gray-900 cursor-pointer"
+                >
                   {member.name} ({member.email})
                 </label>
               </div>
             ))}
           </div>
           {teamMembers.length === 0 && (
-            <p className="text-sm text-gray-500 mt-2">No other team members available</p>
+            <p className="text-sm text-gray-500 mt-2">
+              No other team members available
+            </p>
+          )}
+          {selectedAttendeeIds.length > 0 && (
+            <p className="text-sm text-green-600 mt-2">
+              {selectedAttendeeIds.length} attendee(s) selected
+            </p>
           )}
         </div>
 
