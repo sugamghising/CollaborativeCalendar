@@ -1,4 +1,9 @@
-import { getBlockTime, getIndividualSchedule } from "../services/schedule";
+import {
+  createBlockedTime,
+  createUserSchedule,
+  getBlockTime,
+  getIndividualSchedule,
+} from "../services/schedule";
 import React, { useEffect, useState } from "react";
 
 const UserSchedulePage = () => {
@@ -37,18 +42,8 @@ const UserSchedulePage = () => {
   const [workHour, setWorkHour] = useState([]);
   const [blockDataT, setBlockDataT] = useState([]);
 
-  const [showAddForm, setShowAddForm] = useState(false);
   const [showOfficeForm, setShowOfficeForm] = useState(false);
   const [showBlockForm, setShowBlockForm] = useState(false);
-  const [editingSchedule, setEditingSchedule] = useState(null);
-
-  const [formData, setFormData] = useState({
-    title: "",
-    startTime: "",
-    endTime: "",
-    description: "",
-    role: "",
-  });
 
   const [officeData, setOfficeData] = useState({
     startTime: "",
@@ -61,26 +56,6 @@ const UserSchedulePage = () => {
     startTime: "",
     endTime: "",
   });
-
-  // Updated color system based on type
-  const getScheduleColor = (type, role = null) => {
-    if (type === "office") {
-      return "bg-gradient-to-br from-green-600 to-emerald-700"; // Dark green for office
-    } else if (type === "block") {
-      return "bg-gradient-to-br from-emerald-400 to-green-500"; // Medium green for blocks
-    } else {
-      // For regular schedules, use role-based colors in green theme
-      const roleColors = {
-        Personal: "bg-gradient-to-br from-emerald-300 to-green-400",
-        Professional: "bg-gradient-to-br from-green-500 to-emerald-600",
-        Education: "bg-gradient-to-br from-emerald-500 to-teal-500",
-        Health: "bg-gradient-to-br from-green-400 to-emerald-500",
-        Social: "bg-gradient-to-br from-teal-400 to-emerald-500",
-        Other: "bg-gradient-to-br from-green-600 to-emerald-700",
-      };
-      return roleColors[role] || roleColors.Other;
-    }
-  };
 
   const formatTime = (time) => {
     // Handle ISO date format for block schedules
@@ -101,122 +76,63 @@ const UserSchedulePage = () => {
     return `${displayHour}:${minutes} ${ampm}`;
   };
 
-  const handleSubmit = () => {
-    if (
-      !formData.title ||
-      !formData.startTime ||
-      !formData.endTime ||
-      !formData.role ||
-      !formData.description
-    ) {
-      return;
-    }
-
-    const color = getScheduleColor("regular", formData.role);
-
-    if (editingSchedule) {
-      setSchedules(
-        schedules.map((schedule) =>
-          schedule.id === editingSchedule.id
-            ? { ...formData, id: editingSchedule.id, color, type: "regular" }
-            : schedule
-        )
-      );
-      setEditingSchedule(null);
-    } else {
-      const newSchedule = {
-        ...formData,
-        id: Date.now(),
-        color,
-        type: "regular",
-      };
-      setSchedules([...schedules, newSchedule]);
-    }
-
-    resetForm();
-  };
-
-  const handleOfficeSubmit = () => {
+  const handleOfficeSubmit = async () => {
     if (!officeData.startTime || !officeData.endTime || !officeData.role) {
       return;
     }
 
-    const newOfficeSchedule = {
-      id: Date.now(),
-      title: "Daily Office Time",
-      startTime: officeData.startTime,
-      endTime: officeData.endTime,
-      description: `Daily office hours as ${officeData.role}`,
-      role: officeData.role,
-      type: "office",
-      color: getScheduleColor("office"),
-    };
+    try {
+      const token = localStorage.getItem("token"); // or from your auth context
+      if (!token) {
+        alert("No token found. Please login first.");
+        return;
+      }
 
-    setSchedules([...schedules, newOfficeSchedule]);
+      const res = await createUserSchedule(
+        officeData.startTime,
+        officeData.endTime,
+        officeData.role,
+        token
+      );
+
+      console.log("Schedule created:", res);
+      setShowOfficeForm(false);
+    } catch (err) {
+      alert("Failed to create schedule");
+    }
+
     setOfficeData({ startTime: "", endTime: "", role: "" });
     setShowOfficeForm(false);
   };
 
-  const handleBlockSubmit = () => {
+  const handleBlockSubmit = async () => {
     if (!blockData.title || !blockData.startTime || !blockData.endTime) {
       return;
     }
 
-    const newBlockSchedule = {
-      id: Date.now(),
+    const blockedTimeData = {
       title: blockData.title,
       startTime: blockData.startTime,
       endTime: blockData.endTime,
-      description: "Block schedule",
-      role: "Block Time",
-      type: "block",
-      color: getScheduleColor("block"),
     };
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("No token found. Please login first.");
+        return;
+      }
 
-    setSchedules([...schedules, newBlockSchedule]);
+      const result = await createBlockedTime(blockedTimeData, token);
+      console.log("Blocked time created:", result);
+    } catch (err) {
+      console.error(err);
+    }
     setBlockData({ title: "", startTime: "", endTime: "" });
     setShowBlockForm(false);
   };
 
-  const handleEdit = (schedule) => {
-    if (schedule.type === "regular") {
-      setFormData({
-        title: schedule.title,
-        startTime: schedule.startTime,
-        endTime: schedule.endTime,
-        description: schedule.description,
-        role: schedule.role,
-      });
-      setEditingSchedule(schedule);
-      setShowAddForm(true);
-    }
-  };
-
   const handleDelete = (id) => {
     setSchedules(schedules.filter((schedule) => schedule.id !== id));
-  };
-
-  const resetForm = () => {
-    setFormData({
-      title: "",
-      startTime: "",
-      endTime: "",
-      description: "",
-      role: "",
-    });
-    setEditingSchedule(null);
-    setShowAddForm(false);
-  };
-
-  const getTypeIcon = (type) => {
-    switch (type) {
-      case "office":
-        return "🏢";
-      case "block":
-        return "🔒";
-      default:
-        return "📅";
-    }
   };
 
   useEffect(() => {
@@ -266,13 +182,6 @@ const UserSchedulePage = () => {
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <button
-              onClick={() => setShowAddForm(true)}
-              className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-green-600 text-white px-6 py-3 rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
-            >
-              <span className="text-xl">+</span>
-              Add Schedule
-            </button>
             <button
               onClick={() => setShowOfficeForm(true)}
               className="flex items-center gap-2 bg-gradient-to-r from-green-700 to-emerald-800 text-white px-6 py-3 rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
@@ -411,122 +320,6 @@ const UserSchedulePage = () => {
           ))}
         </div>
 
-        {/* Regular Add/Edit Form Modal */}
-        {showAddForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-              <div className="flex justify-between items-center p-6 border-b border-emerald-100">
-                <h3 className="text-2xl font-bold text-emerald-800">
-                  {editingSchedule ? "Edit Schedule" : "Add New Schedule"}
-                </h3>
-                <button
-                  onClick={resetForm}
-                  className="p-2 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-100 rounded-xl transition-all"
-                >
-                  <span className="text-lg">×</span>
-                </button>
-              </div>
-
-              <div className="p-6 space-y-5">
-                <div>
-                  <label className="block text-sm font-semibold text-emerald-700 mb-2">
-                    Title
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.title}
-                    onChange={(e) =>
-                      setFormData({ ...formData, title: e.target.value })
-                    }
-                    className="w-full px-4 py-3 rounded-xl border border-emerald-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all outline-none"
-                    placeholder="Enter schedule title"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-emerald-700 mb-2">
-                      Start Time
-                    </label>
-                    <input
-                      type="time"
-                      value={formData.startTime}
-                      onChange={(e) =>
-                        setFormData({ ...formData, startTime: e.target.value })
-                      }
-                      className="w-full px-4 py-3 rounded-xl border border-emerald-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-emerald-700 mb-2">
-                      End Time
-                    </label>
-                    <input
-                      type="time"
-                      value={formData.endTime}
-                      onChange={(e) =>
-                        setFormData({ ...formData, endTime: e.target.value })
-                      }
-                      className="w-full px-4 py-3 rounded-xl border border-emerald-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-emerald-700 mb-2">
-                    Role/Category
-                  </label>
-                  <select
-                    value={formData.role}
-                    onChange={(e) =>
-                      setFormData({ ...formData, role: e.target.value })
-                    }
-                    className="w-full px-4 py-3 rounded-xl border border-emerald-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all outline-none"
-                  >
-                    <option value="">Select a role</option>
-                    <option value="Personal">Personal</option>
-                    <option value="Professional">Professional</option>
-                    <option value="Education">Education</option>
-                    <option value="Health">Health</option>
-                    <option value="Social">Social</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-emerald-700 mb-2">
-                    Description
-                  </label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                    className="w-full px-4 py-3 rounded-xl border border-emerald-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all resize-none outline-none"
-                    placeholder="Enter schedule description"
-                    rows="3"
-                  />
-                </div>
-
-                <div className="flex gap-3 pt-4">
-                  <button
-                    onClick={resetForm}
-                    className="flex-1 px-6 py-3 rounded-xl border border-emerald-200 text-emerald-700 hover:bg-emerald-50 transition-all"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSubmit}
-                    className="flex-1 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 text-white hover:shadow-lg transform hover:scale-105 transition-all"
-                  >
-                    {editingSchedule ? "Update" : "Add"} Schedule
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Office Time Form Modal */}
         {showOfficeForm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -551,13 +344,25 @@ const UserSchedulePage = () => {
                     </label>
                     <input
                       type="time"
+                      step="1800" // 30-min steps
                       value={officeData.startTime}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        const [hours, minutes] = value.split(":").map(Number);
+                        console.log(hours);
+
+                        if (minutes % 30 !== 0) {
+                          alert(
+                            "Please select time in 30-minute intervals (e.g., 2:00, 2:30)."
+                          );
+                          return;
+                        }
+
                         setOfficeData({
                           ...officeData,
-                          startTime: e.target.value,
-                        })
-                      }
+                          startTime: value,
+                        });
+                      }}
                       className="w-full px-4 py-3 rounded-xl border border-emerald-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all outline-none"
                     />
                   </div>
@@ -567,13 +372,24 @@ const UserSchedulePage = () => {
                     </label>
                     <input
                       type="time"
-                      value={officeData.endTime}
-                      onChange={(e) =>
+                      step="1800" // 30-min steps
+                      value={officeData.endTime} // Changed from officeData.startTime
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        const [hours, minutes] = value.split(":").map(Number);
+                        console.log(hours);
+                        if (minutes % 30 !== 0) {
+                          alert(
+                            "Please select time in 30-minute intervals (e.g., 2:00, 2:30)."
+                          );
+                          return;
+                        }
+
                         setOfficeData({
                           ...officeData,
-                          endTime: e.target.value,
-                        })
-                      }
+                          endTime: value, // Changed from startTime: value
+                        });
+                      }}
                       className="w-full px-4 py-3 rounded-xl border border-emerald-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all outline-none"
                     />
                   </div>
@@ -638,43 +454,169 @@ const UserSchedulePage = () => {
                     type="text"
                     value={blockData.title}
                     onChange={(e) =>
-                      setBlockData({ ...blockData, title: e.target.value })
+                      setBlockData({
+                        ...blockData,
+                        title: e.target.value,
+                      })
                     }
+                    placeholder="e.g., Doctor 22"
                     className="w-full px-4 py-3 rounded-xl border border-emerald-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all outline-none"
-                    placeholder="e.g., Doctor Appointment"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-emerald-700 mb-2">
-                      Start Time (ISO Format)
+                      Start Time (Nepal Time)
                     </label>
                     <input
                       type="datetime-local"
-                      value={blockData.startTime}
-                      onChange={(e) =>
+                      step="1800" // 30-minute intervals
+                      value={(() => {
+                        if (!blockData.startTime) return "";
+
+                        // Convert UTC ISO to Nepal time for display
+                        const utcDate = new Date(blockData.startTime);
+
+                        // Add Nepal offset (5 hours 45 minutes) to UTC
+                        const nepalTime = new Date(
+                          utcDate.getTime() + (5 * 60 + 45) * 60 * 1000
+                        );
+
+                        // Format for datetime-local input without timezone issues
+                        const year = nepalTime.getUTCFullYear();
+                        const month = String(
+                          nepalTime.getUTCMonth() + 1
+                        ).padStart(2, "0");
+                        const day = String(nepalTime.getUTCDate()).padStart(
+                          2,
+                          "0"
+                        );
+                        const hours = String(nepalTime.getUTCHours()).padStart(
+                          2,
+                          "0"
+                        );
+                        const minutes = String(
+                          nepalTime.getUTCMinutes()
+                        ).padStart(2, "0");
+
+                        return `${year}-${month}-${day}T${hours}:${minutes}`;
+                      })()}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (!value) return;
+
+                        // Validate 30-minute intervals first
+                        const [datePart, timePart] = value.split("T");
+                        const [hours, minutes] = timePart
+                          .split(":")
+                          .map(Number);
+
+                        if (minutes % 30 !== 0) {
+                          alert(
+                            "Please select time in 30-minute intervals (e.g., 2:00, 2:30)."
+                          );
+                          return;
+                        }
+
+                        // Treat the datetime-local value as Nepal time and convert to UTC
+                        const inputAsNepalTime = new Date(value);
+
+                        // Since datetime-local is treated as local time, we need to offset it properly
+                        // Get the local timezone offset and Nepal offset
+                        const localOffset =
+                          inputAsNepalTime.getTimezoneOffset(); // minutes
+                        const nepalOffsetMinutes = -(5 * 60 + 45); // Nepal is UTC+5:45, so -345 minutes from UTC
+
+                        // Convert to UTC: add local offset, subtract Nepal offset
+                        const utcTime = new Date(
+                          inputAsNepalTime.getTime() +
+                            (localOffset - nepalOffsetMinutes) * 60 * 1000
+                        );
+
                         setBlockData({
                           ...blockData,
-                          startTime: e.target.value + ":00.000Z",
-                        })
-                      }
+                          startTime: utcTime.toISOString(),
+                        });
+                      }}
                       className="w-full px-4 py-3 rounded-xl border border-emerald-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all outline-none"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-emerald-700 mb-2">
-                      End Time (ISO Format)
+                      End Time (Nepal Time)
                     </label>
                     <input
                       type="datetime-local"
-                      value={blockData.endTime}
-                      onChange={(e) =>
+                      step="1800" // 30-minute intervals
+                      value={(() => {
+                        if (!blockData.endTime) return "";
+
+                        // Convert UTC ISO to Nepal time for display
+                        const utcDate = new Date(blockData.endTime);
+
+                        // Add Nepal offset (5 hours 45 minutes) to UTC
+                        const nepalTime = new Date(
+                          utcDate.getTime() + (5 * 60 + 45) * 60 * 1000
+                        );
+
+                        // Format for datetime-local input without timezone issues
+                        const year = nepalTime.getUTCFullYear();
+                        const month = String(
+                          nepalTime.getUTCMonth() + 1
+                        ).padStart(2, "0");
+                        const day = String(nepalTime.getUTCDate()).padStart(
+                          2,
+                          "0"
+                        );
+                        const hours = String(nepalTime.getUTCHours()).padStart(
+                          2,
+                          "0"
+                        );
+                        const minutes = String(
+                          nepalTime.getUTCMinutes()
+                        ).padStart(2, "0");
+
+                        return `${year}-${month}-${day}T${hours}:${minutes}`;
+                      })()}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (!value) return;
+
+                        // Validate 30-minute intervals first
+                        const [datePart, timePart] = value.split("T");
+                        const [, timeOnly] = value.split("T");
+                        const [hours, minutes] = timeOnly
+                          .split(":")
+                          .map(Number);
+
+                        if (minutes % 30 !== 0) {
+                          alert(
+                            "Please select time in 30-minute intervals (e.g., 2:00, 2:30)."
+                          );
+                          return;
+                        }
+
+                        // Treat the datetime-local value as Nepal time and convert to UTC
+                        const inputAsNepalTime = new Date(value);
+
+                        // Since datetime-local is treated as local time, we need to offset it properly
+                        // Get the local timezone offset and Nepal offset
+                        const localOffset =
+                          inputAsNepalTime.getTimezoneOffset(); // minutes
+                        const nepalOffsetMinutes = -(5 * 60 + 45); // Nepal is UTC+5:45, so -345 minutes from UTC
+
+                        // Convert to UTC: add local offset, subtract Nepal offset
+                        const utcTime = new Date(
+                          inputAsNepalTime.getTime() +
+                            (localOffset - nepalOffsetMinutes) * 60 * 1000
+                        );
+
                         setBlockData({
                           ...blockData,
-                          endTime: e.target.value + ":00.000Z",
-                        })
-                      }
+                          endTime: utcTime.toISOString(),
+                        });
+                      }}
                       className="w-full px-4 py-3 rounded-xl border border-emerald-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all outline-none"
                     />
                   </div>
