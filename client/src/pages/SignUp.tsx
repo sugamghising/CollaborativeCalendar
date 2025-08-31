@@ -28,10 +28,11 @@ const SignUp = () => {
     try {
       // Call signup to send verification code
       await signup(email, name, '');
-      // Redirect to verify-email page with email in state
+      // Move to verification step
       navigate('/verify-email', { 
+        replace: true,
         state: { 
-          email,
+          email: email,
           message: 'We\'ve sent a verification code to your email.'
         } 
       });

@@ -11,9 +11,22 @@ const VerifyResetCode = () => {
   const searchParams = new URLSearchParams(location.search);
   const email = searchParams.get('email') || '';
 
+  // Redirect to forgot password if no email is present
+  React.useEffect(() => {
+    if (!email) {
+      navigate('/forgot-password');
+    }
+  }, [email, navigate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    
+    if (!email) {
+      setError('No email provided. Please start the password reset process again.');
+      navigate('/forgot-password');
+      return;
+    }
     
     if (!code) {
       setError('Please enter the verification code');
@@ -22,10 +35,16 @@ const VerifyResetCode = () => {
 
     setIsLoading(true);
     try {
-      await forgotPasswordcodeVerify(email, code);
-      navigate(`/reset-password?email=${encodeURIComponent(email)}&code=${code}`);
+      const response = await forgotPasswordcodeVerify(email, code);
+      if (response && response.token) {
+        navigate(`/reset-password?email=${encodeURIComponent(email)}&code=${encodeURIComponent(code)}`);
+      } else {
+        setError('Invalid verification code');
+      }
     } catch (err: any) {
+      console.error('Verification error:', err);
       setError(err.response?.data?.message || 'Invalid verification code');
+      setIsLoading(false);
     } finally {
       setIsLoading(false);
     }

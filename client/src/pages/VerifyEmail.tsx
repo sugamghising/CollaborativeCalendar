@@ -10,8 +10,15 @@ const VerifyEmail = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Get email from location state or default to empty string
-  const email = location.state?.email || '';
+  const [email] = useState(location.state?.email || '');
+  const [message] = useState(location.state?.message || '');
+
+  // Redirect to signup if no email is present
+  React.useEffect(() => {
+    if (!email) {
+      navigate('/signup', { replace: true });
+    }
+  }, [email, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,6 +31,7 @@ const VerifyEmail = () => {
 
     if (!email) {
       setError('Email not found. Please try signing up again.');
+      navigate('/signup', { replace: true });
       return;
     }
 

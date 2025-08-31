@@ -106,8 +106,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     } else {
       setLoading(false);
-      // Only redirect to login if not already there and not on a public route
-      if (!['/login', '/signup', '/forgot-password'].includes(location.pathname)) {
+      // Only redirect to login if not on a public route
+      const publicRoutes = [
+        '/login',
+        '/signup',
+        '/forgot-password',
+        '/verify-reset-code',
+        '/reset-password',
+        '/verify-email',
+        '/complete-signup'
+      ];
+      if (!publicRoutes.some(route => location.pathname.startsWith(route))) {
         navigate('/login', { replace: true });
       }
     }

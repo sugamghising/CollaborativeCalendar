@@ -30,8 +30,14 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      // Handle unauthorized access
+    // Only redirect on 401 if:
+    // 1. It's not an auth endpoint
+    // 2. We have a response with status 401
+    // 3. We're not already on a public route
+    const isAuthEndpoint = error.config?.url?.includes('/auth/');
+    const isPublicRoute = window.location.pathname.match(/^\/((login|signup|forgot-password|verify-reset-code|reset-password).*)?$/);
+    
+    if (!isAuthEndpoint && error.response?.status === 401 && !isPublicRoute) {
       localStorage.removeItem('token');
       window.location.href = '/login';
     }
