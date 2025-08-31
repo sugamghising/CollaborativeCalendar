@@ -3,11 +3,9 @@ import {
   CalendarIcon,
   ClockIcon,
   UsersIcon,
-  MagnifyingGlassIcon,
   ExclamationTriangleIcon,
   CheckCircleIcon,
   XCircleIcon,
-  PlusIcon,
 } from "@heroicons/react/24/outline";
 
 const MeetingDashboard = () => {
