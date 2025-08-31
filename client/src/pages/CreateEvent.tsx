@@ -3,22 +3,29 @@ import { useNavigate } from "react-router-dom";
 import Button from "../components/layout/common/Button";
 import eventService from "../services/event.service";
 import { useAuth } from "../context/AuthContext";
+import { userService } from "../services/user.service";
+
+enum Priority {
+  LOW = "LOW",
+  MEDIUM = "MEDIUM",
+  HIGH = "HIGH"
+}
 
 const CreateEvent: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [formData, setFormData] = useState({
     title: "",
-    description: "",
-    startDate: "",
-    endDate: "",
-    location: "",
+    preferredStart: "",
+    duration: 30, // default duration in minutes
+    priority: Priority.MEDIUM,
+    attendees: [] as string[],
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     console.log(error);
@@ -38,28 +45,57 @@ const CreateEvent: React.FC = () => {
       return;
     }
 
-    if (!formData.startDate || !formData.endDate) {
-      setError("Start and end dates are required");
+    if (!formData.preferredStart) {
+      setError("Preferred start time is required");
       return;
     }
 
-    if (new Date(formData.endDate) <= new Date(formData.startDate)) {
-      setError("End date must be after start date");
+    if (!formData.duration || formData.duration <= 0) {
+      setError("Duration must be greater than 0 minutes");
+      return;
+    }
+
+    if (formData.attendees.length === 0) {
+      setError("At least one attendee is required");
       return;
     }
 
     setIsLoading(true);
 
     try {
-      // Format dates for the API
-      const eventData = {
-        ...formData,
-        startDate: new Date(formData.startDate).toISOString(),
-        endDate: new Date(formData.endDate).toISOString(),
-        // Add teamId if user is part of a team
-        ...(user?.teamId && { teamId: user.teamId }),
-      };
+      if (!user?.teamId) {
+        setError("You must be part of a team to create an event");
+        return;
+      }
 
+      // Get team members to map emails to user IDs
+      const teams = await userService.getMyTeams();
+      const currentTeam = teams.find(team => team.id === user.teamId);
+      
+      if (!currentTeam) {
+        setError("Could not find your team");
+        return;
+      }
+
+      const teamMembers = currentTeam.members;
+      const attendeeIds = formData.attendees
+        .map(email => teamMembers.find(member => member.email.toLowerCase() === email.toLowerCase())?.id)
+        .filter((id): id is string => id !== undefined);
+
+      if (attendeeIds.length !== formData.attendees.length) {
+        setError("Some attendee emails do not match team members");
+        return;
+      }
+
+      const eventData = {
+        title: formData.title,
+        duration: Number(formData.duration),
+        preferredStart: new Date(formData.preferredStart).toISOString(),
+        priority: formData.priority,
+        teamId: user.teamId,
+        attendeeIds,
+      };
+      console.log("eventData", eventData);
       await eventService.create(eventData);
       navigate("/events");
     } catch (err: any) {
@@ -93,36 +129,19 @@ const CreateEvent: React.FC = () => {
           />
         </div>
 
-        <div>
-          <label
-            htmlFor="description"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Description
-          </label>
-          <textarea
-            id="description"
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            rows={4}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
-          />
-        </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label
-              htmlFor="startDate"
+              htmlFor="preferredStart"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Start Date & Time *
+              Preferred Start Time *
             </label>
             <input
               type="datetime-local"
-              id="startDate"
-              name="startDate"
-              value={formData.startDate}
+              id="preferredStart"
+              name="preferredStart"
+              value={formData.preferredStart}
               onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
               required
@@ -131,17 +150,18 @@ const CreateEvent: React.FC = () => {
 
           <div>
             <label
-              htmlFor="endDate"
+              htmlFor="duration"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              End Date & Time *
+              Duration (minutes) *
             </label>
             <input
-              type="datetime-local"
-              id="endDate"
-              name="endDate"
-              value={formData.endDate}
+              type="number"
+              id="duration"
+              name="duration"
+              value={formData.duration}
               onChange={handleChange}
+              min="1"
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
               required
             />
@@ -150,19 +170,44 @@ const CreateEvent: React.FC = () => {
 
         <div>
           <label
-            htmlFor="location"
+            htmlFor="priority"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            Location
+            Priority *
+          </label>
+          <select
+            id="priority"
+            name="priority"
+            value={formData.priority}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            required
+          >
+            <option value={Priority.LOW}>Low</option>
+            <option value={Priority.MEDIUM}>Medium</option>
+            <option value={Priority.HIGH}>High</option>
+          </select>
+        </div>
+
+        <div>
+          <label
+            htmlFor="attendees"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Attendees (comma-separated emails) *
           </label>
           <input
             type="text"
-            id="location"
-            name="location"
-            value={formData.location}
-            onChange={handleChange}
+            id="attendees"
+            name="attendees"
+            value={formData.attendees.join(", ")}
+            onChange={(e) => {
+              const emails = e.target.value.split(",").map(email => email.trim()).filter(email => email);
+              setFormData(prev => ({ ...prev, attendees: emails }));
+            }}
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            placeholder="Enter location or meeting link"
+            placeholder="email1@example.com, email2@example.com"
+            required
           />
         </div>
 
