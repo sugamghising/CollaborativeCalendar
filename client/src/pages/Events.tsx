@@ -27,8 +27,7 @@ const MeetingDashboard = () => {
           {
             method: "GET",
             headers: {
-              Authorization:
-                "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMsImlhdCI6MTc1NjY0MDA2MCwiZXhwIjoxNzU3MjQ0ODYwfQ.UPLghITvdVdosdpMirn-lqooh0eqR-qxzCFpR3bHqLc",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
               "Content-Type": "application/json",
             },
           }

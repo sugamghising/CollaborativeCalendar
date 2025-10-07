@@ -86,6 +86,7 @@ const setAuthData = (token: string, user: User | null) => {
 const clearAuthData = () => {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
+  localStorage.removeItem("token");
   delete axios.defaults.headers.common["Authorization"];
 };
 

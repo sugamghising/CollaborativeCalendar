@@ -30,3 +30,12 @@ export const createscheduleSchema=z.object({
     teamId: z.number().int().positive(),
     attendeeIds: z.array(z.number().int().positive()).min(1, "Need at least one attendee")
 })
+export const createMeetingSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  duration: z.number().min(15, "Duration must be at least 15 minutes").max(480, "Duration cannot exceed 8 hours"),
+  preferredStart: z.string().datetime("Invalid datetime format"),
+  importance: z.number().min(1, "Importance must be between 1-10").max(10, "Importance must be between 1-10"),
+  deadline: z.string().datetime("Invalid deadline format"),
+  teamId: z.number().int().positive("Team ID must be positive"),
+  attendeeIds: z.array(z.number().int().positive()).min(1, "At least one attendee is required")
+});

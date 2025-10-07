@@ -5,12 +5,6 @@ import eventService from "../services/event.service";
 import { useAuth } from "../context/AuthContext";
 import { userService, User } from "../services/user.service";
 
-enum Priority {
-  LOW = "LOW",
-  MEDIUM = "MEDIUM",
-  HIGH = "HIGH",
-}
-
 const CreateEvent: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -18,7 +12,8 @@ const CreateEvent: React.FC = () => {
     title: "",
     preferredStart: "",
     duration: 30, // default duration in minutes
-    priority: Priority.MEDIUM,
+    importance: 5, // numeric importance 1-10
+    deadline: "",
     attendeeIds: [] as number[],
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -70,7 +65,8 @@ const CreateEvent: React.FC = () => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]:
+        name === "importance" || name === "duration" ? Number(value) : value,
     }));
   };
 
@@ -109,8 +105,18 @@ const CreateEvent: React.FC = () => {
       return;
     }
 
+    if (!formData.deadline) {
+      setError("Deadline is required");
+      return;
+    }
+
     if (!formData.duration || formData.duration <= 0) {
       setError("Duration must be greater than 0 minutes");
+      return;
+    }
+
+    if (formData.importance < 1 || formData.importance > 10) {
+      setError("Importance must be between 1 and 10");
       return;
     }
 
@@ -124,17 +130,27 @@ const CreateEvent: React.FC = () => {
       return;
     }
 
+    // Validate that deadline is after preferred start time
+    const startDate = new Date(formData.preferredStart);
+    const deadlineDate = new Date(formData.deadline);
+    if (deadlineDate <= startDate) {
+      setError("Deadline must be after the preferred start time");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      // Convert the datetime-local value to ISO string format
+      // Convert the datetime-local values to ISO string format
       const preferredStartISO = new Date(formData.preferredStart).toISOString();
+      const deadlineISO = new Date(formData.deadline).toISOString();
 
       const eventData = {
         title: formData.title,
         duration: Number(formData.duration),
         preferredStart: preferredStartISO,
-        priority: formData.priority,
+        importance: Number(formData.importance),
+        deadline: deadlineISO,
         teamId: teamId,
         attendeeIds: formData.attendeeIds,
       };
@@ -208,6 +224,26 @@ const CreateEvent: React.FC = () => {
 
           <div>
             <label
+              htmlFor="deadline"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Deadline *
+            </label>
+            <input
+              type="datetime-local"
+              id="deadline"
+              name="deadline"
+              value={formData.deadline}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              required
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label
               htmlFor="duration"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
@@ -224,27 +260,29 @@ const CreateEvent: React.FC = () => {
               required
             />
           </div>
-        </div>
 
-        <div>
-          <label
-            htmlFor="priority"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Priority *
-          </label>
-          <select
-            id="priority"
-            name="priority"
-            value={formData.priority}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            required
-          >
-            <option value={Priority.LOW}>Low</option>
-            <option value={Priority.MEDIUM}>Medium</option>
-            <option value={Priority.HIGH}>High</option>
-          </select>
+          <div>
+            <label
+              htmlFor="importance"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Importance (1-10) *
+            </label>
+            <input
+              type="number"
+              id="importance"
+              name="importance"
+              value={formData.importance}
+              onChange={handleChange}
+              min="1"
+              max="10"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              required
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              1 = Low importance, 10 = High importance
+            </p>
+          </div>
         </div>
 
         <div>

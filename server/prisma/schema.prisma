@@ -45,10 +45,12 @@ model UserTeam {
 }
 
 model Meeting {
-  id          Int           @id @default(autoincrement())
-  title       String
-  duration    Int
-  priority    Priority      @default(MEDIUM)
+  id            Int      @id @default(autoincrement())
+  title         String
+  duration      Int
+  priority      Priority @default(MEDIUM)
+  priorityScore Float
+
   deadline    DateTime?
   scheduledAt DateTime?
   status      MeetingStatus @default(PENDING)
