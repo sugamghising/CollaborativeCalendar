@@ -1,15 +1,19 @@
 import nodemailer from 'nodemailer';
 
-// Create transporter (fixed: createTransport, not createTransporter)
+
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: "smtp.gmail.com",
+  port: 587,          // use TLS port
+  secure: false,      // false for TLS
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_APP_PASSWORD
-  }
+    pass: process.env.EMAIL_APP_PASSWORD, // 16-digit App Password
+  },
+  tls: {
+    rejectUnauthorized: false, // allows connection in some cloud environments
+  },
 });
 
-// Verify transporter configuration (with proper TypeScript types)
 transporter.verify((error: any, success: any) => {
   if (error) {
     console.error('Email transporter error:', error);
