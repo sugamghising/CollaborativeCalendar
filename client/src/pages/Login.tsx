@@ -25,7 +25,7 @@ const Login = () => {
 
     try {
       await login(email, password);
-      navigate("/");
+      navigate("/calendar");
     } catch (err: any) {
       setLocalError(err.message || "Failed to log in");
       console.log("ERRORORORORO", err.message);

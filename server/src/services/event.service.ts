@@ -1,6 +1,64 @@
 import prisma from "../config/db";
 
 
+
+export const calculatePriorityScore = (factors: WeightedPriorityFactors): number => {
+  const deadlineScore = calculateDeadlineScore(factors.deadline);
+  const importanceScore = calculateImportanceScore(factors.importance);
+  const durationScore = calculateDurationScore(factors.duration);
+
+  const weightedScore = (0.5 * deadlineScore) + (0.2 * importanceScore) + (0.3 * durationScore);
+  return Math.round(weightedScore * 100) / 100;
+};
+
+
+
+
+
+export const calculateDurationScore = (duration: number): number => {
+ 
+  if (duration <= 30) return 0.9; 
+  if (duration <= 60) return 0.7;
+  if (duration <= 120) return 0.5;
+  if (duration <= 240) return 0.3; 
+  return 0.1;
+};
+
+export const calculateImportanceScore = (importance: number): number => {
+  return importance / 10;
+};
+
+export const calculateDeadlineScore = (deadline: string): number => {
+  const deadlineDate = new Date(deadline);
+  const now = new Date();
+  const timeDifference = deadlineDate.getTime() - now.getTime();
+  
+  
+  if (timeDifference <= 0) return 1;
+  
+  const hoursUntilDeadline = timeDifference / (1000 * 60 * 60);
+  
+  // Scoring based on hours until deadline
+  if (hoursUntilDeadline <= 2) return 1;
+  if (hoursUntilDeadline <= 6) return 0.9; 
+  if (hoursUntilDeadline <= 24) return 0.7;
+  if (hoursUntilDeadline <= 72) return 0.5;
+  if (hoursUntilDeadline <= 168) return 0.3; 
+  return 0.1; 
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
 // export const checkTimeSlotAvailability = async (
 //   attendeeIds: number[],
 //   start: Date,
@@ -223,55 +281,26 @@ export const checkTimeSlotAvailability = async (
     conflictingUsers: [...new Set(conflictingUsers)]
   };
 };
-export const calculateDurationScore = (duration: number): number => {
-  // Invert duration preference - shorter meetings are easier to schedule
-  if (duration <= 30) return 0.9; // Very short meeting
-  if (duration <= 60) return 0.7; // Standard meeting
-  if (duration <= 120) return 0.5; // Longer meeting
-  if (duration <= 240) return 0.3; // Very long meeting
-  return 0.1; // Extended meeting
-};
+
 
 /**
  * Calculate weighted priority score
  * Formula: (0.5 * deadlineScore) + (0.2 * importanceScore) + (0.3 * durationScore)
  */
-export const calculatePriorityScore = (factors: WeightedPriorityFactors): number => {
-  const deadlineScore = calculateDeadlineScore(factors.deadline);
-  const importanceScore = calculateImportanceScore(factors.importance);
-  const durationScore = calculateDurationScore(factors.duration);
 
-  const weightedScore = (0.5 * deadlineScore) + (0.2 * importanceScore) + (0.3 * durationScore);
-  
-  // Normalize to 0-100 scale
-  return Math.round(weightedScore * 100) / 100;
-};
-export const calculateDeadlineScore = (deadline: string): number => {
-  const deadlineDate = new Date(deadline);
-  const now = new Date();
-  const timeDifference = deadlineDate.getTime() - now.getTime();
-  
-  // If deadline has passed, maximum urgency
-  if (timeDifference <= 0) return 1;
-  
-  const hoursUntilDeadline = timeDifference / (1000 * 60 * 60);
-  
-  // Scoring based on hours until deadline
-  if (hoursUntilDeadline <= 2) return 1; // Extremely urgent
-  if (hoursUntilDeadline <= 6) return 0.9; // Very urgent
-  if (hoursUntilDeadline <= 24) return 0.7; // Urgent
-  if (hoursUntilDeadline <= 72) return 0.5; // Moderately urgent
-  if (hoursUntilDeadline <= 168) return 0.3; // Somewhat urgent (1 week)
-  return 0.1; // Low urgency
-};
 
-/**
- * Calculate importance score (0-1 scale)
- * Linear scaling from user input (1-10)
- */
-export const calculateImportanceScore = (importance: number): number => {
-  return importance / 10;
-};
+
+
+
+
+
+
+
+
+
+
+
+
 
 export interface WeightedPriorityFactors {
   importance: number;

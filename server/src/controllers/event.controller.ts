@@ -306,7 +306,7 @@ export const createschedule = async (req: Request, res: Response) => {
   const createdBy = req.user!.userId;
 
   try {
-    // Verify creator is team member
+
     const creatorMembership = await prisma.userTeam.findFirst({
       where: { userId: createdBy, teamId, status: "ACCEPTED" }
     });
@@ -316,7 +316,7 @@ export const createschedule = async (req: Request, res: Response) => {
       return;
     }
 
-    // Verify all attendees are team members
+   
     const attendeesResult = await prisma.userTeam.findMany({
       where: { 
         userId: { in: attendeeIds }, 
@@ -336,7 +336,7 @@ export const createschedule = async (req: Request, res: Response) => {
       return;
     }
 
-    // Calculate priority score
+   
     const priorityScore = calculatePriorityScore({
       importance,
       deadline,
@@ -355,7 +355,7 @@ export const createschedule = async (req: Request, res: Response) => {
       priority
     });
 
-    // Step 1: Check if preferred time is available
+    
     const availability = await checkTimeSlotAvailability(attendeeIds, preferredDate, preferredEndTime);
     
     if (availability.allAvailable) {
@@ -388,7 +388,7 @@ export const createschedule = async (req: Request, res: Response) => {
       return;
     }
 
-    // Step 2: Try to replace lower priority meeting
+    
     const replaced = await replaceLowPriorityMeeting(attendeeIds, preferredDate, preferredEndTime, priorityScore);
     
     if (replaced) {
@@ -422,7 +422,7 @@ export const createschedule = async (req: Request, res: Response) => {
       return;
     }
 
-    // Step 3: Find next available time
+  
     const nextAvailableTime = await findNextAvailableTime(attendeeIds, preferredDate, duration);
 
     if (nextAvailableTime) {

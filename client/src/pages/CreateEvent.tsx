@@ -30,20 +30,18 @@ const CreateEvent: React.FC = () => {
         const teamsResponse = await userService.getMyTeams();
         console.log("Teams response:", teamsResponse);
 
-        // Check if response is an array and get the first team
         const firstTeam = Array.isArray(teamsResponse)
           ? teamsResponse[0]
           : teamsResponse;
         console.log("First team:", firstTeam);
 
         if (firstTeam && firstTeam.members) {
-          // Filter out the current user from the team members list
           const otherMembers = firstTeam.members.filter(
             (member) => member.id !== user?.id
           );
           console.log("Other team members:", otherMembers);
-          setTeamMembers(firstTeam.members); // Show all members including current user
-          setTeamId(firstTeam.id); // Store the team ID
+          setTeamMembers(firstTeam.members);
+          setTeamId(firstTeam.id);
         } else {
           console.log("No team members found");
           setError("No team members found");
@@ -130,7 +128,6 @@ const CreateEvent: React.FC = () => {
       return;
     }
 
-    // Validate that deadline is after preferred start time
     const startDate = new Date(formData.preferredStart);
     const deadlineDate = new Date(formData.deadline);
     if (deadlineDate <= startDate) {
@@ -141,7 +138,6 @@ const CreateEvent: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Convert the datetime-local values to ISO string format
       const preferredStartISO = new Date(formData.preferredStart).toISOString();
       const deadlineISO = new Date(formData.deadline).toISOString();
 
@@ -157,8 +153,6 @@ const CreateEvent: React.FC = () => {
 
       console.log("eventData", eventData);
 
-      // Make sure your eventService.create method calls the correct endpoint
-      // It should POST to /api/events/createschedule
       const response = await eventService.create(eventData);
 
       if (response.success) {

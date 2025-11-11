@@ -7,40 +7,10 @@ import {
 import React, { useEffect, useState } from "react";
 
 const UserSchedulePage = () => {
-  const [schedules, setSchedules] = useState([
-    {
-      id: 1,
-      title: "Morning Workout",
-      startTime: "07:00",
-      endTime: "08:00",
-      description: "Cardio + Strength Training",
-      role: "Personal",
-      type: "regular", // regular, office, block
-      color: "bg-gradient-to-br from-emerald-500 to-green-600",
-    },
-    {
-      id: 2,
-      title: "Office Work",
-      startTime: "09:00",
-      endTime: "17:00",
-      description: "Frontend development & team meeting",
-      role: "Professional",
-      type: "regular",
-      color: "bg-gradient-to-br from-emerald-600 to-teal-600",
-    },
-    {
-      id: 3,
-      title: "Evening Study",
-      startTime: "19:30",
-      endTime: "21:00",
-      description: "Computer Science Algorithms Practice",
-      role: "Education",
-      type: "regular",
-      color: "bg-gradient-to-br from-green-500 to-emerald-500",
-    },
-  ]);
+  const [schedules, setSchedules] = useState([]);
   const [workHour, setWorkHour] = useState([]);
   const [blockDataT, setBlockDataT] = useState([]);
+  const [error, seterror] = useState("");
 
   const [showOfficeForm, setShowOfficeForm] = useState(false);
   const [showBlockForm, setShowBlockForm] = useState(false);
@@ -82,7 +52,7 @@ const UserSchedulePage = () => {
     }
 
     try {
-      const token = localStorage.getItem("token"); // or from your auth context
+      const token = localStorage.getItem("token");
       if (!token) {
         alert("No token found. Please login first.");
         return;
@@ -96,20 +66,45 @@ const UserSchedulePage = () => {
       );
 
       console.log("Schedule created:", res);
+
+      // Update the work hour state immediately
+      if (res && res.schedule) {
+        setWorkHour(res.schedule);
+      } else {
+        // If the API doesn't return the created schedule, fetch it again
+        const updatedSchedule = await getIndividualSchedule(token);
+        setWorkHour(updatedSchedule.schedule[0]);
+      }
+
       setShowOfficeForm(false);
     } catch (err) {
       alert("Failed to create schedule");
-    }
-
-    setOfficeData({ startTime: "", endTime: "", role: "" });
-    setShowOfficeForm(false);
-  };
-
-  const handleBlockSubmit = async () => {
-    if (!blockData.title || !blockData.startTime || !blockData.endTime) {
       return;
     }
 
+    setOfficeData({ startTime: "", endTime: "", role: "" });
+  };
+
+  const handleBlockSubmit = async () => {
+    seterror("");
+    if (!blockData.title) {
+      seterror("title should be provided");
+      return;
+    }
+    const start = new Date(blockData.startTime);
+    const end = new Date(blockData.endTime);
+    if (!blockData.startTime || !blockData.endTime) {
+      seterror("Please select both start and end times.");
+      return;
+    }
+    if (start.getTime() < Date.now()) {
+      seterror("Start time should be in the future");
+      return;
+    }
+    if (start > end) {
+      seterror("Start time cannot be after end time.");
+      return;
+    }
     const blockedTimeData = {
       title: blockData.title,
       startTime: blockData.startTime,
@@ -124,8 +119,19 @@ const UserSchedulePage = () => {
 
       const result = await createBlockedTime(blockedTimeData, token);
       console.log("Blocked time created:", result);
+
+      // Add the new block time to the state immediately
+      if (result && result.blocked) {
+        setBlockDataT([...blockDataT, result.blocked]);
+      } else {
+        // If the API doesn't return the created block, fetch all blocks again
+        const updatedBlockData = await getBlockTime(token);
+        setBlockDataT(updatedBlockData.blockedTimes);
+      }
     } catch (err) {
       console.error(err);
+      seterror("Failed to create block time. Please try again.");
+      return;
     }
     setBlockData({ title: "", startTime: "", endTime: "" });
     setShowBlockForm(false);
@@ -159,6 +165,7 @@ const UserSchedulePage = () => {
 
     fetchSchedules();
   }, []);
+
   const formatDate = (timeString) => {
     const date = new Date(timeString);
     const day = date.getDate();
@@ -190,7 +197,10 @@ const UserSchedulePage = () => {
               Add Daily Office Time
             </button>
             <button
-              onClick={() => setShowBlockForm(true)}
+              onClick={() => {
+                setShowBlockForm(true);
+                seterror("");
+              }}
               className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-green-500 text-white px-6 py-3 rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
             >
               <span className="text-xl">🔒</span>
@@ -199,7 +209,6 @@ const UserSchedulePage = () => {
           </div>
         </div>
 
-        {/* Schedule Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {workHour && (
             <div
@@ -537,15 +546,12 @@ const UserSchedulePage = () => {
                       value={(() => {
                         if (!blockData.endTime) return "";
 
-                        // Convert UTC ISO to Nepal time for display
                         const utcDate = new Date(blockData.endTime);
 
-                        // Add Nepal offset (5 hours 45 minutes) to UTC
                         const nepalTime = new Date(
                           utcDate.getTime() + (5 * 60 + 45) * 60 * 1000
                         );
 
-                        // Format for datetime-local input without timezone issues
                         const year = nepalTime.getUTCFullYear();
                         const month = String(
                           nepalTime.getUTCMonth() + 1
@@ -568,7 +574,6 @@ const UserSchedulePage = () => {
                         const value = e.target.value;
                         if (!value) return;
 
-                        // Validate 30-minute intervals first
                         const [datePart, timePart] = value.split("T");
                         const [, timeOnly] = value.split("T");
                         const [hours, minutes] = timeOnly
@@ -582,16 +587,12 @@ const UserSchedulePage = () => {
                           return;
                         }
 
-                        // Treat the datetime-local value as Nepal time and convert to UTC
                         const inputAsNepalTime = new Date(value);
 
-                        // Since datetime-local is treated as local time, we need to offset it properly
-                        // Get the local timezone offset and Nepal offset
                         const localOffset =
                           inputAsNepalTime.getTimezoneOffset(); // minutes
                         const nepalOffsetMinutes = -(5 * 60 + 45); // Nepal is UTC+5:45, so -345 minutes from UTC
 
-                        // Convert to UTC: add local offset, subtract Nepal offset
                         const utcTime = new Date(
                           inputAsNepalTime.getTime() +
                             (localOffset - nepalOffsetMinutes) * 60 * 1000
@@ -621,6 +622,20 @@ const UserSchedulePage = () => {
                     Create Block
                   </button>
                 </div>
+
+                {error && (
+                  <div
+                    style={{
+                      marginTop: "10px",
+                      padding: "10px 14px",
+                      borderRadius: "8px",
+                      backgroundColor: "#e74c3c",
+                      color: "#fff",
+                    }}
+                  >
+                    {error}
+                  </div>
+                )}
               </div>
             </div>
           </div>

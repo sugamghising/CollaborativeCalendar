@@ -57,8 +57,6 @@ const MeetingDashboard = () => {
         return <CheckCircleIcon className="w-4 h-4 text-green-500" />;
       case "CANCELLED":
         return <XCircleIcon className="w-4 h-4 text-red-500" />;
-      case "PENDING":
-        return <ExclamationTriangleIcon className="w-4 h-4 text-yellow-500" />;
       default:
         return <ExclamationTriangleIcon className="w-4 h-4 text-gray-500" />;
     }
@@ -165,7 +163,6 @@ const MeetingDashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
       <div className="container mx-auto px-6 py-8">
-        {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -181,7 +178,6 @@ const MeetingDashboard = () => {
             </div>
           </div>
 
-          {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-white/50 shadow-sm">
               <div className="flex items-center gap-3">
@@ -248,7 +244,6 @@ const MeetingDashboard = () => {
               key={meeting.id}
               className="bg-white/80 backdrop-blur-sm rounded-xl border border-white/50 shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-105 overflow-hidden"
             >
-              {/* Card Header */}
               <div className="p-6 pb-4">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-2">
@@ -267,19 +262,16 @@ const MeetingDashboard = () => {
                 </div>
 
                 <div className="space-y-3">
-                  {/* Team */}
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <UsersIcon className="w-4 h-4" />
                     <span className="capitalize">{meeting.team.name}</span>
                   </div>
 
-                  {/* Duration */}
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <ClockIcon className="w-4 h-4" />
                     <span>{meeting.duration} minutes</span>
                   </div>
 
-                  {/* Scheduled Time */}
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <CalendarIcon className="w-4 h-4" />
                     <span>{formatDate(meeting.scheduledAt)}</span>
@@ -287,7 +279,6 @@ const MeetingDashboard = () => {
                 </div>
               </div>
 
-              {/* Attendees */}
               <div className="px-6 pb-4">
                 <p className="text-sm font-medium text-gray-700 mb-2">
                   Attendees ({meeting.attendees.length})
@@ -314,14 +305,13 @@ const MeetingDashboard = () => {
                 </div>
               </div>
 
-              {/* Card Footer */}
               <div className="bg-gray-50/80 backdrop-blur-sm px-6 py-3 border-t border-gray-100">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-gray-500">
                     Created by {meeting.creator.name}
                   </span>
                   <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    className={`flex gap-2 px-2 py-1 rounded-full text-xs font-medium ${
                       meeting.status === "SCHEDULED"
                         ? "bg-green-100 text-green-700"
                         : meeting.status === "PENDING"
@@ -329,6 +319,7 @@ const MeetingDashboard = () => {
                         : "bg-red-100 text-red-700"
                     }`}
                   >
+                    {getStatusIcon(meeting.status)}
                     {meeting.status}
                   </span>
                 </div>
@@ -337,7 +328,6 @@ const MeetingDashboard = () => {
           ))}
         </div>
 
-        {/* Empty State */}
         {!loading && filteredAndSortedMeetings.length === 0 && (
           <div className="text-center py-12">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">

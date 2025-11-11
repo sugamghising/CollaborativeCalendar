@@ -35,7 +35,6 @@ const TeamMembers = () => {
     fetchTeam();
   }, []);
 
-  // Create new team
   const handleCreateTeamSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!teamName.trim()) return;
@@ -56,7 +55,6 @@ const TeamMembers = () => {
     }
   };
 
-  // Invite member
   const handleInviteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteEmail.trim()) return;
@@ -65,16 +63,13 @@ const TeamMembers = () => {
       setLoading(true);
       const response = await inviteTeamMember(token, inviteEmail);
 
-      // ✅ show backend message inside modal
       setInviteMessage(response.message);
 
-      // refresh members list
       const teamData = await getTeam(token);
       setMembers(teamData?.members || []);
 
       setInviteEmail("");
 
-      // ✅ close modal after 3 sec
       setTimeout(() => {
         setIsInviteModalOpen(false);
         setInviteMessage(null);
@@ -83,7 +78,6 @@ const TeamMembers = () => {
       const message = err.response?.data?.message || "Failed to invite member";
       setInviteMessage(message);
 
-      // auto close after 3 sec
       setTimeout(() => {
         setIsInviteModalOpen(false);
         setInviteMessage(null);
@@ -97,7 +91,6 @@ const TeamMembers = () => {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <h1 className="text-2xl font-bold text-green-600">Team Members</h1>
         {members.length > 0 && (
@@ -111,7 +104,6 @@ const TeamMembers = () => {
         )}
       </div>
 
-      {/* Team Members */}
       {members.length === 0 ? (
         <div className="bg-white shadow rounded-lg p-8 flex flex-col items-center justify-center text-center">
           <UsersIcon className="h-12 w-12 text-green-500 mb-4" />
@@ -152,7 +144,6 @@ const TeamMembers = () => {
         </div>
       )}
 
-      {/* Create Team Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 px-4">
           <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative">
@@ -198,7 +189,6 @@ const TeamMembers = () => {
         </div>
       )}
 
-      {/* Invite Member Modal */}
       {isInviteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 px-4">
           <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative">
