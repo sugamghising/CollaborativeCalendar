@@ -120,11 +120,9 @@ const UserSchedulePage = () => {
       const result = await createBlockedTime(blockedTimeData, token);
       console.log("Blocked time created:", result);
 
-      // Add the new block time to the state immediately
       if (result && result.blocked) {
         setBlockDataT([...blockDataT, result.blocked]);
       } else {
-        // If the API doesn't return the created block, fetch all blocks again
         const updatedBlockData = await getBlockTime(token);
         setBlockDataT(updatedBlockData.blockedTimes);
       }

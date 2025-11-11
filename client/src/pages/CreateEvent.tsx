@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { data, useNavigate } from "react-router-dom";
 import Button from "../components/layout/common/Button";
 import eventService from "../services/event.service";
 import { useAuth } from "../context/AuthContext";
@@ -60,6 +60,7 @@ const CreateEvent: React.FC = () => {
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >
   ) => {
+    console.log("changed made", e.target.value);
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -92,12 +93,24 @@ const CreateEvent: React.FC = () => {
     e.preventDefault();
     setError(null);
 
-    // Basic validation
     if (!formData.title.trim()) {
       setError("Event title is required");
       return;
     }
-
+    console.log(
+      "formdartaatatatata=======================>>>>>>>>>>>",
+      formData
+    );
+    const start = new Date(formData.preferredStart);
+    const deadline = new Date(formData.deadline);
+    if (start.getTime() < Date.now()) {
+      setError("please choose start time as the future time not past time");
+      return;
+    }
+    if (deadline.getTime() < Date.now() + 30 * 60 * 1000) {
+      setError("please choose deadline 30 min in future from now");
+      return;
+    }
     if (!formData.preferredStart) {
       setError("Preferred start time is required");
       return;
