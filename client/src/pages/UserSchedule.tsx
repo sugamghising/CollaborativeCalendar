@@ -451,7 +451,7 @@ const UserSchedulePage = () => {
                         title: e.target.value,
                       })
                     }
-                    placeholder="e.g., Doctor 22"
+                    placeholder="e.g., Doctor appoitment"
                     className="w-full px-4 py-3 rounded-xl border border-emerald-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all outline-none"
                   />
                 </div>

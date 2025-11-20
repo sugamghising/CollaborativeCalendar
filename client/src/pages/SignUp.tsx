@@ -73,7 +73,10 @@ const SignUp = () => {
       setError("Please fill in all fields");
       return;
     }
-
+    if (name.length < 3) {
+      setError("Name must be three letter at least");
+      return;
+    }
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       return;
@@ -100,6 +103,7 @@ const SignUp = () => {
       setError(err.message || "Failed to complete signup");
     } finally {
       setIsLoading(false);
+      navigate("/calendar");
     }
   };
 

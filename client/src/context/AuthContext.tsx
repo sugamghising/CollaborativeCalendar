@@ -5,7 +5,7 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-import { useNavigate, Navigate, useLocation, Location } from "react-router-dom";
+import { useNavigate, Navigate, useLocation } from "react-router-dom";
 import * as authService from "../services/authService";
 import axios from "axios";
 
@@ -119,7 +119,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
       // If we're on the login or signup page, redirect to home
       if (["/login", "/signup"].includes(location.pathname)) {
-        navigate("/", { replace: true });
+        navigate("/calendar", { replace: true });
       }
     } else {
       setLoading(false);
@@ -214,9 +214,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       setLoading(true);
       setError(null);
       const userData = await authService.completeSignup(name, password, token);
+      const authtoken = userData.sessionToken;
+      // console.log(
+      //   "token session token!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+      //   authtoken,
+      //   userData
+      // );
+
       setUser(userData);
-      setAuthData(userData.token, userData);
-      navigate("/");
+      setAuthData(userData.sessionToken, userData);
+      localStorage.setItem("token", authtoken);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to complete signup"
