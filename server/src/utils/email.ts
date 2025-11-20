@@ -1,18 +1,23 @@
 import nodemailer from 'nodemailer';
+import SMTPTransport from "nodemailer/lib/smtp-transport";
 
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,          // use TLS port
-  secure: false,      // false for TLS
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_APP_PASSWORD, // 16-digit App Password
-  },
-  tls: {
-    rejectUnauthorized: false, // allows connection in some cloud environments
-  },
-});
+
+const transporter = nodemailer.createTransport(
+  {
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_APP_PASSWORD
+    },
+    tls: {
+      rejectUnauthorized: false
+    }
+  } as SMTPTransport.Options
+);
+
 
 transporter.verify((error: any, success: any) => {
   if (error) {
