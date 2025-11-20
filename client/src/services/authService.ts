@@ -84,6 +84,8 @@ export const completeSignup = async (name: string, password: string, token: stri
             },
         }
     );
+      const authtoken = response.data.SessionToken || response.data.sessionToken;
+        localStorage.setItem('token', authtoken);
     return response.data;
 };
 

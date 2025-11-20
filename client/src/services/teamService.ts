@@ -52,7 +52,7 @@ const api = (token: string) =>
 
 export const createTeam = async (token:string, teamName:string) => {
   try {
-    const response = await api(token).post("/api/user/createTeam", {
+    const response = await api(token).post("/user/createTeam", {
       teamName,
     });
     return response.data;

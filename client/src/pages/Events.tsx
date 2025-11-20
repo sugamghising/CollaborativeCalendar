@@ -338,7 +338,7 @@ const MeetingDashboard = () => {
             </h3>
             <p className="text-gray-600">
               {meetings.length === 0
-                ? "Create your first meeting to get started."
+                ? "Create your first meeting to get started at calendar create event."
                 : "Try adjusting your search or filter criteria."}
             </p>
           </div>
