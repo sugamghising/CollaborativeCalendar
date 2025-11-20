@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:5000/api/schedule";
+const API_BASE_URL = `${process.env.REACT_APP_API_URL}/schedule`||"http://localhost:5000/api/schedule";
 
 // your static token (later you can store in .env or localStorage)
 

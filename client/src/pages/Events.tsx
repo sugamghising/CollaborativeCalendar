@@ -17,21 +17,19 @@ const MeetingDashboard = () => {
   const [priorityFilter, setPriorityFilter] = useState("ALL");
   const [sortBy, setSortBy] = useState("date");
 
+  const BASE_API = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
   // Fetch meetings from API
   useEffect(() => {
     const fetchMeetings = async () => {
       try {
         setLoading(true);
-        const response = await fetch(
-          "http://localhost:5000/api/events/getmeetings",
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
+        const response = await fetch(`${BASE_API}/events/getmeetings`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "application/json",
+          },
+        });
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);

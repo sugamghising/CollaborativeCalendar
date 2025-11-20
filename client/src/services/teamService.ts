@@ -1,5 +1,8 @@
 import axios from "axios";
-const API_BASE_URL = 'http://localhost:5000/api';
+
+const API_BASE_URL =
+  (process.env.REACT_APP_API_URL as string) ||
+  "http://localhost:5000/api";
 
 export const getUserInvites = async (token:string) => {
   try {
@@ -37,9 +40,9 @@ export const acceptInviteToTeam = async (teamId: string | number, token: string)
     throw error;
   }
 }
-const api = (token:string) =>
+const api = (token: string) =>
   axios.create({
-    baseURL: "http://localhost:5000", // or from env
+    baseURL: API_BASE_URL,
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
@@ -61,7 +64,7 @@ export const createTeam = async (token:string, teamName:string) => {
 
 export const getTeam = async (token: string) => {
   try {
-    const response = await axios.get("http://localhost:5000/api/user/getTeam", {
+    const response = await axios.get(`${API_BASE_URL}/user/getTeam`, {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
@@ -79,13 +82,10 @@ export const getTeam = async (token: string) => {
   }
 };
 
-const API_BASE = "http://localhost:5000/api"; // adjust if needed
-
 // Invite team member
 export const inviteTeamMember = async (token: string, email: string) => {
   try {
-    const response = await axios.post(
-      `${API_BASE}/user/inviteTeamMember`,
+    const response = await axios.post(`${API_BASE_URL}/user/inviteTeamMember`,
       { email }, // body
       {
         headers: {

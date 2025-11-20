@@ -1,37 +1,37 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import React, { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const VerifyEmail = () => {
-  const [code, setCode] = useState('');
-  const [error, setError] = useState('');
+  const [code, setCode] = useState("");
+  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { verifyEmail } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  
-  const [email] = useState(location.state?.email || '');
-  const [message] = useState(location.state?.message || '');
+
+  const [email] = useState(location.state?.email || "");
+  const [message] = useState(location.state?.message || "");
 
   // Redirect to signup if no email is present
   React.useEffect(() => {
     if (!email) {
-      navigate('/signup', { replace: true });
+      navigate("/signup", { replace: true });
     }
   }, [email, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    
+    setError("");
+
     if (!code) {
-      setError('Please enter the verification code');
+      setError("Please enter the verification code");
       return;
     }
 
     if (!email) {
-      setError('Email not found. Please try signing up again.');
-      navigate('/signup', { replace: true });
+      setError("Email not found. Please try signing up again.");
+      navigate("/signup", { replace: true });
       return;
     }
 
@@ -39,14 +39,14 @@ const VerifyEmail = () => {
     try {
       const token = await verifyEmail(email, code);
       // Navigate to complete signup with the verification token
-      navigate('/complete-signup', { 
-        state: { 
+      navigate("/complete-signup", {
+        state: {
           email,
-          token 
-        } 
+          token,
+        },
       });
     } catch (err: any) {
-      setError(err.message || 'Failed to verify email');
+      setError(err.message || "Failed to verify email");
     } finally {
       setIsLoading(false);
     }
@@ -69,8 +69,17 @@ const VerifyEmail = () => {
             <div className="mb-4 bg-red-50 border-l-4 border-red-400 p-4">
               <div className="flex">
                 <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  <svg
+                    className="h-5 w-5 text-red-400"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </div>
                 <div className="ml-3">
@@ -79,10 +88,13 @@ const VerifyEmail = () => {
               </div>
             </div>
           )}
-          
+
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="code" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="code"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Verification Code
               </label>
               <div className="mt-1">
@@ -103,9 +115,11 @@ const VerifyEmail = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 ${
+                  isLoading ? "opacity-70 cursor-not-allowed" : ""
+                }`}
               >
-                {isLoading ? 'Verifying...' : 'Verify Email'}
+                {isLoading ? "Verifying..." : "Verify Email"}
               </button>
             </div>
           </form>
@@ -122,14 +136,7 @@ const VerifyEmail = () => {
               </div>
             </div>
 
-            <div className="mt-6">
-              <button
-                type="button"
-                className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-              >
-                Resend Code
-              </button>
-            </div>
+            <div className="mt-6"></div>
           </div>
         </div>
       </div>
